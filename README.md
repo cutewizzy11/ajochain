@@ -11,6 +11,15 @@ holds everyone's money. AjoChain puts the pot in a Soroban smart contract instea
 - Every on-time payment is recorded on-chain. This **reputation** goes with the member to future circles.
 - An optional **auto-pay agent** (for example an AI agent or a scheduled bot) can pay on a member's behalf. It can only spend what that member has approved for the contract, through a token allowance.
 
+## Live on testnet
+
+| | |
+|---|---|
+| AjoChain contract | [`CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB`](https://stellar.expert/explorer/testnet/contract/CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB) |
+| Token (native XLM, SAC) | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
+
+End-to-end test on testnet: a 3-member circle (10 XLM each) was created, joined and paid. One member's share was paid by the auto-pay agent through `contribute_for`. The contract then paid the 30 XLM pot out automatically and recorded on-time reputation for every member.
+
 ## Repo layout
 
 ```
@@ -39,6 +48,7 @@ cargo test
 ## Build and deploy to testnet
 
 You need the Stellar CLI: `cargo install --locked stellar-cli`, plus `rustup target add wasm32v1-none`.
+(If the build fails on `wasm-opt-sys`, for example on older macOS, use `cargo install --locked stellar-cli --no-default-features`.)
 
 ```bash
 # 1. Create and fund a testnet identity
