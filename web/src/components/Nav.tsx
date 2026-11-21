@@ -11,33 +11,27 @@ export function Nav() {
   const { address, connect, disconnect } = useWallet();
   const path = usePathname();
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+    <header className="border-b border-line bg-paper">
+      <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-between px-5 sm:px-8">
+        <Link href="/" className="flex items-center gap-2.5">
           <Logo />
-          <span>
-            Ajo<span className="text-brand">Chain</span>
-          </span>
+          <span className="font-display text-xl tracking-[-0.01em]">AjoChain</span>
         </Link>
-        <nav className="flex items-center gap-2 text-sm sm:gap-4">
-          <span className="hidden items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs text-muted sm:inline-flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-gold" /> Testnet
-          </span>
+        <nav className="flex items-center gap-5">
+          <span className="kicker hidden sm:inline">Testnet</span>
           <Link
             href="/app"
-            className={`rounded-lg px-2 py-1 font-medium transition hover:text-brand ${
-              path === "/app" ? "text-brand" : "text-muted"
-            }`}
+            className={`text-sm underline-offset-4 ${path === "/app" ? "underline decoration-ink" : "hover:underline"}`}
           >
-            My circles
+            Circles
           </Link>
           {address ? (
-            <button onClick={disconnect} className="btn-ghost py-1.5 pl-1.5 pr-3" title="Disconnect wallet">
-              <Avatar address={address} size={24} />
+            <button className="btn-quiet py-1.5" onClick={disconnect} title="Disconnect wallet">
+              <Avatar address={address} size={20} />
               <span className="font-mono text-xs">{short(address)}</span>
             </button>
           ) : (
-            <button onClick={connect} className="btn py-2">
+            <button className="btn py-2" onClick={connect}>
               Connect wallet
             </button>
           )}

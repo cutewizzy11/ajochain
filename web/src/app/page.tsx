@@ -1,174 +1,119 @@
 import Link from "next/link";
+import { Passbook, type Cell } from "@/components/ui";
 
 const steps = [
   {
-    t: "Start a circle",
-    d: "Pick the contribution (for example 20 USDC), the number of members and how often to pay: daily, weekly or monthly.",
+    title: "Start a circle",
+    body: "Pick the contribution (for example 20 USDC), the number of members and how often to pay: daily, weekly or monthly.",
   },
   {
-    t: "Everyone contributes",
-    d: "Each round, members pay into the smart contract, not into anyone's pocket. An auto-pay agent can pay for you, up to a limit you set.",
+    title: "Everyone contributes",
+    body: "Each round, members pay into the smart contract, not into anyone's pocket. An auto-pay agent can pay for you, up to a limit you set.",
   },
   {
-    t: "The pot pays out automatically",
-    d: "When everyone has paid, the contract sends the whole pot to that round's member. No collector and no excuses.",
+    title: "The pot pays out automatically",
+    body: "When everyone has paid, the contract sends the whole pot to that round's member. No collector and no excuses.",
   },
   {
-    t: "Build your reputation",
-    d: "Every on-time payment is recorded on-chain. It becomes a savings history that follows you to your next circle.",
+    title: "Build your reputation",
+    body: "Every on-time payment is recorded on-chain. It becomes a savings history that follows you to your next circle.",
   },
 ];
 
-const trust = [
-  { t: "No collector", d: "The contract holds the pot" },
-  { t: "Paid by code", d: "Payouts happen on their own" },
-  { t: "Stable USDC", d: "Safe from naira and cedi swings" },
-  { t: "On-chain reputation", d: "Your track record, portable" },
+const NAMES = ["Ada", "Kofi", "Tunde", "Ama", "Chidi", "Esi"];
+const PAID_NOW = new Set([0, 1, 3, 5]);
+
+const cells: Cell[][] = NAMES.map((_, i) =>
+  Array.from({ length: 6 }, (_, r): Cell => {
+    if (r < 2) return { state: i === r ? "pot" : "paid" };
+    if (r === 2) return { state: PAID_NOW.has(i) ? "paid" : "due", turn: i === 2 };
+    return { state: "empty" };
+  }),
+);
+
+const facts = [
+  { figure: "0.00001 XLM", label: "Base network fee per payment" },
+  { figure: "~5s", label: "For a contribution to settle" },
+  { figure: "USDC", label: "Dollar savings, issued by Circle" },
+  { figure: "Freighter · LOBSTR · xBull", label: "Wallets people already use" },
 ];
-
-const why = [
-  { t: "Fractions of a cent", d: "Stellar fees are tiny, so a 5,000-naira contribution isn't eaten by gas." },
-  { t: "Final in ~5 seconds", d: "Payments settle fast. The pot lands while the circle is still on the call." },
-  { t: "Native USDC", d: "Circle-issued USDC on Stellar, with cash on and off ramps across West Africa." },
-  { t: "Wallets people use", d: "Works with Freighter, LOBSTR, xBull and other Stellar wallets." },
-];
-
-const MEMBERS = ["Ada", "Kofi", "Tunde", "Ama", "Chidi", "Esi"];
-
-function PotRing() {
-  return (
-    <div className="relative mx-auto aspect-square w-full max-w-[340px]">
-      <svg viewBox="0 0 200 200" className="h-full w-full" aria-hidden>
-        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--line)" strokeWidth="2" />
-        <circle
-          cx="100"
-          cy="100"
-          r="78"
-          fill="none"
-          stroke="var(--brand)"
-          strokeWidth="2.5"
-          strokeDasharray="6 8"
-          className="origin-center animate-[spin_40s_linear_infinite]"
-        />
-        <circle cx="100" cy="100" r="44" fill="var(--gold-soft)" />
-        <circle cx="100" cy="100" r="34" fill="var(--gold)" />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#3d2a03]">Pot</span>
-        <span className="text-xl font-bold text-[#2a1d02]">600 USDC</span>
-      </div>
-      {MEMBERS.map((name, i) => {
-        const a = (i / MEMBERS.length) * Math.PI * 2 - Math.PI / 2;
-        const x = 50 + Math.cos(a) * 39;
-        const y = 50 + Math.sin(a) * 39;
-        const current = i === 2;
-        return (
-          <div
-            key={name}
-            className="absolute -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{ left: `${x}%`, top: `${y}%` }}
-          >
-            <div
-              className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-md ${
-                current ? "bg-gold ring-4 ring-gold/25" : "bg-brand"
-              }`}
-            >
-              {name[0]}
-            </div>
-            <div className="mt-1 text-[11px] font-medium text-muted">{current ? `${name} · gets pot` : name}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function Home() {
   return (
-    <div className="space-y-24">
-      <section className="grid items-center gap-12 pt-4 md:grid-cols-[1.15fr_1fr]">
-        <div className="space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-            Ajo · Esusu · Susu, now trustless
-          </span>
-          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
-            Rotating savings,
-            <br />
-            <span className="text-brand">without the collector risk.</span>
+    <div className="space-y-24 sm:space-y-32">
+      <section className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-center">
+        <div>
+          <p className="kicker">Esusu · Ajo · Susu — on Stellar</p>
+          <h1 className="display mt-5 text-5xl leading-[1.02] sm:text-6xl lg:text-[4.25rem]">
+            Ajo, without anybody holding the money.
           </h1>
-          <p className="max-w-xl text-lg text-muted">
-            Millions of people in Nigeria and Ghana save through ajo, and too many have lost money when the
-            collector disappears. AjoChain keeps the pot in a smart contract on Stellar. It pays out on
-            schedule, in stable USDC, to the right person, every time.
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-2">
+            You pay in 20 USDC on Friday. When everyone has paid, a contract on Stellar sends the pot to whoever&apos;s
+            turn it is. There is no collector to trust, chase or lose.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/app" className="btn btn-lg">
-              Open the app →
+              Open the app
             </Link>
-            <a href="#how" className="btn-ghost btn-lg">
+            <a href="#how" className="btn-quiet btn-lg">
               How it works
             </a>
           </div>
         </div>
-        <div className="weave rounded-3xl p-6">
-          <PotRing />
-        </div>
-      </section>
 
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
-        {trust.map((t) => (
-          <div key={t.t} className="bg-surface p-5">
-            <div className="font-semibold">{t.t}</div>
-            <div className="mt-1 text-sm text-muted">{t.d}</div>
+        <figure className="sheet p-5 sm:p-6">
+          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+            <span className="font-display text-lg">Contribution card</span>
+            <span className="font-mono text-[11px] text-muted">CIRCLE #0412 · WEEKLY</span>
           </div>
-        ))}
+          <Passbook
+            rows={NAMES.map((n) => ({ key: n, label: <span className="text-sm">{n}</span> }))}
+            rounds={6}
+            current={2}
+            cells={cells}
+          />
+          <figcaption className="mt-4 border-t border-line pt-3 font-mono text-[11px] text-muted">
+            Round 3 of 6. Tunde&apos;s pot is 600 USDC; four of six have paid.
+          </figcaption>
+        </figure>
       </section>
 
-      <section id="how" className="scroll-mt-24 space-y-8">
-        <div className="space-y-2">
-          <p className="eyebrow">How it works</p>
-          <h2 className="text-3xl font-bold tracking-tight">The ajo you know, minus the trust problem.</h2>
+      <section id="how" className="scroll-mt-24">
+        <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
+          <div>
+            <p className="kicker">The method</p>
+            <h2 className="display mt-3 text-4xl">How a round works</h2>
+          </div>
+          <ol className="border-t border-ink/70">
+            {steps.map((s, i) => (
+              <li key={s.title} className="grid grid-cols-[3rem_1fr] gap-4 border-b border-line py-6">
+                <span className="font-mono text-sm text-muted">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3 className="font-display text-xl">{s.title}</h3>
+                  <p className="mt-1.5 max-w-xl leading-relaxed text-ink-2">{s.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s, i) => (
-            <div key={s.t} className="card relative">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft font-mono text-sm font-bold text-brand">
-                {i + 1}
-              </div>
-              <h3 className="mt-4 font-semibold">{s.t}</h3>
-              <p className="mt-2 text-sm text-muted">{s.d}</p>
+      </section>
+
+      <section>
+        <p className="kicker">Why Stellar</p>
+        <dl className="mt-6 grid border-t border-ink/70 sm:grid-cols-2 lg:grid-cols-4">
+          {facts.map((f) => (
+            <div key={f.label} className="border-b border-line py-6 sm:pr-6 lg:border-b-0 lg:border-r lg:last:border-r-0 lg:[&:not(:first-child)]:pl-6">
+              <dt className="figure text-2xl">{f.figure}</dt>
+              <dd className="mt-2 text-sm text-muted">{f.label}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       </section>
 
-      <section className="grid gap-10 md:grid-cols-[1fr_1.4fr]">
-        <div className="space-y-3">
-          <p className="eyebrow">Why Stellar</p>
-          <h2 className="text-3xl font-bold tracking-tight">Built for small, frequent payments.</h2>
-          <p className="text-muted">
-            Ajo contributions are small and regular. They only work on-chain when fees are close to zero and
-            the money is stable.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {why.map((w) => (
-            <div key={w.t} className="card">
-              <h3 className="font-semibold">{w.t}</h3>
-              <p className="mt-1.5 text-sm text-muted">{w.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="weave relative overflow-hidden rounded-3xl border border-line bg-surface px-6 py-14 text-center">
-        <h2 className="text-3xl font-bold tracking-tight">Start your first circle in a minute.</h2>
-        <p className="mx-auto mt-3 max-w-lg text-muted">
-          Connect a Stellar testnet wallet, set the amount and invite your people with a link.
-        </p>
-        <Link href="/app" className="btn btn-lg mt-6">
-          Open the app →
+      <section className="flex flex-col items-start justify-between gap-6 border-y border-ink/70 py-10 sm:flex-row sm:items-center">
+        <h2 className="display max-w-xl text-3xl sm:text-4xl">Start a circle with people you already save with.</h2>
+        <Link href="/app" className="btn btn-lg">
+          Open the app
         </Link>
       </section>
     </div>

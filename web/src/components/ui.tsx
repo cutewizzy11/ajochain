@@ -1,103 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Circle } from "@/lib/ajo";
 
 export const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
 
-function hue(addr: string) {
-  let h = 0;
-  for (let i = 0; i < addr.length; i++) h = (h * 31 + addr.charCodeAt(i)) % 360;
-  return h;
-}
-
-/** Deterministic, colourful avatar for a Stellar address. */
-export function Avatar({ address, size = 36, ring = false }: { address: string; size?: number; ring?: boolean }) {
-  const h = hue(address);
-  return (
-    <span
-      title={address}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-mono font-semibold text-white ${
-        ring ? "ring-2 ring-gold ring-offset-2 ring-offset-surface" : ""
-      }`}
-      style={{
-        width: size,
-        height: size,
-        fontSize: size * 0.32,
-        background: `linear-gradient(135deg, hsl(${h} 60% 42%), hsl(${(h + 50) % 360} 65% 32%))`,
-      }}
-    >
-      {address.slice(1, 3)}
-    </span>
-  );
-}
-
-export function StatusBadge({ status }: { status: Circle["status"] }) {
-  const s = {
-    Active: "bg-brand-soft text-brand",
-    Open: "bg-gold-soft text-gold",
-    Completed: "bg-surface-2 text-muted",
-  }[status];
-  const label = { Active: "Active", Open: "Filling up", Completed: "Completed" }[status];
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${s}`}>
-      <span className={`h-1.5 w-1.5 rounded-full bg-current ${status === "Active" ? "animate-pulse" : ""}`} />
-      {label}
-    </span>
-  );
-}
-
-export function Progress({ value, max, tone = "brand" }: { value: number; max: number; tone?: "brand" | "gold" }) {
-  const pct = max ? Math.min(100, (value / max) * 100) : 0;
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
-      <div
-        className={`h-full rounded-full transition-all duration-700 ${tone === "gold" ? "bg-gold" : "bg-brand"}`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
-
-export function ScoreRing({ score, size = 96 }: { score: number | null; size?: number }) {
-  const r = 42;
-  const c = 2 * Math.PI * r;
-  const pct = score ?? 0;
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 100 100" className="-rotate-90" width={size} height={size}>
-        <circle cx="50" cy="50" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="9" />
-        <circle
-          cx="50"
-          cy="50"
-          r={r}
-          fill="none"
-          stroke={pct >= 80 ? "var(--brand)" : "var(--gold)"}
-          strokeWidth="9"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - pct / 100)}
-          className="transition-[stroke-dashoffset] duration-1000"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold tabular-nums">{score === null ? "—" : score}</span>
-        {score !== null && <span className="text-[10px] uppercase tracking-wider text-muted">score</span>}
-      </div>
-    </div>
-  );
-}
-
-export function Alert({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "error" | "success" }) {
-  const s = {
-    info: "border-line bg-surface-2",
-    error: "border-danger/30 bg-danger-soft text-danger",
-    success: "border-brand/30 bg-brand-soft text-brand",
-  }[tone];
-  return <div className={`rounded-xl border px-4 py-3 text-sm break-words ${s}`}>{children}</div>;
-}
-
-/** Re-renders every second; returns the current unix time in seconds. */
 export function useNow() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
@@ -118,19 +25,182 @@ export function formatDuration(secs: number) {
   return `${m}m ${String(s).padStart(2, "0")}s`;
 }
 
+const INKS = ["#25316e", "#b2402a", "#5d6b3a", "#9a6a1c", "#4a5560"];
+
+function hash(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+export function Avatar({ address, size = 36, ring = false }: { address: string; size?: number; ring?: boolean }) {
+  return (
+    <span
+      title={address}
+      className="inline-flex shrink-0 items-center justify-center rounded-[3px] font-mono font-medium uppercase text-white"
+      style={{
+        width: size,
+        height: size,
+        fontSize: size * 0.36,
+        background: INKS[hash(address) % INKS.length],
+        outline: ring ? "1.5px solid var(--stamp)" : undefined,
+        outlineOffset: ring ? 2 : undefined,
+      }}
+    >
+      {address.slice(1, 3)}
+    </span>
+  );
+}
+
+const STATUS: Record<Circle["status"], { label: string; cls: string }> = {
+  Open: { label: "Enrolling", cls: "text-ochre border-ochre" },
+  Active: { label: "Running", cls: "text-indigo border-indigo" },
+  Completed: { label: "Settled", cls: "text-stamp border-stamp" },
+};
+
+export function StatusBadge({ status }: { status: Circle["status"] }) {
+  const s = STATUS[status];
+  return (
+    <span
+      className={`inline-block rounded-[2px] border-[1.5px] px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] ${s.cls}`}
+    >
+      {s.label}
+    </span>
+  );
+}
+
+export function Progress({ value, max, tone = "brand" }: { value: number; max: number; tone?: "brand" | "gold" }) {
+  const n = Math.max(1, max);
+  return (
+    <div className="flex h-1.5 gap-[2px]" role="progressbar" aria-valuenow={value} aria-valuemax={max}>
+      {Array.from({ length: n }, (_, i) => (
+        <span
+          key={i}
+          className={`flex-1 ${i < value ? (tone === "gold" ? "bg-ochre" : "bg-ink") : "bg-line"}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function Score({ score }: { score: number | null }) {
+  return (
+    <div className="flex items-baseline gap-1">
+      <span className="figure text-6xl leading-none">{score === null ? "—" : score}</span>
+      {score !== null && <span className="font-mono text-xs text-muted">/100</span>}
+    </div>
+  );
+}
+
+export function Alert({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "error" | "success" }) {
+  const t =
+    tone === "error" ? "border-stamp text-stamp" : tone === "success" ? "border-indigo text-indigo" : "border-ink-2";
+  return <div className={`break-words border-l-2 bg-paper-2/60 px-4 py-3 text-sm ${t}`}>{children}</div>;
+}
+
 export function Logo({ size = 28 }: { size?: number }) {
-  // Ring of members around a pot: the ajo circle.
-  const dots = Array.from({ length: 6 }, (_, i) => {
-    const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    return [16 + Math.cos(a) * 11, 16 + Math.sin(a) * 11];
-  });
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <circle cx="16" cy="16" r="11" fill="none" stroke="var(--brand)" strokeWidth="1.5" strokeDasharray="2 3" />
-      {dots.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="2.6" fill={i === 0 ? "var(--gold)" : "var(--brand)"} />
-      ))}
-      <circle cx="16" cy="16" r="4.5" fill="var(--gold)" />
+      <circle cx="16" cy="16" r="11" fill="none" stroke="var(--ink)" strokeWidth="1.2" />
+      {Array.from({ length: 6 }, (_, i) => {
+        const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        return (
+          <circle
+            key={i}
+            cx={16 + Math.cos(a) * 11}
+            cy={16 + Math.sin(a) * 11}
+            r={i === 0 ? 3 : 2.2}
+            fill={i === 0 ? "var(--stamp)" : "var(--ink)"}
+          />
+        );
+      })}
     </svg>
+  );
+}
+
+export type Cell = { state: "pot" | "paid" | "due" | "empty"; turn?: boolean };
+
+function CellMark({ cell }: { cell: Cell }) {
+  if (cell.state === "pot")
+    return (
+      <span className="inline-flex h-8 w-8 -rotate-12 items-center justify-center rounded-full border-[1.5px] border-stamp font-mono text-[8px] font-medium tracking-[0.1em] text-stamp">
+        POT
+      </span>
+    );
+  if (cell.state === "paid")
+    return (
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-label="paid" className="text-indigo">
+        <path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  if (cell.state === "due")
+    return cell.turn ? (
+      <span
+        aria-label="due, receives pot"
+        className="inline-block h-8 w-8 rounded-full border-[1.5px] border-dashed border-stamp"
+      />
+    ) : (
+      <span aria-label="due" className="inline-block h-4 w-4 rounded-[2px] border border-dashed border-muted" />
+    );
+  return <span className="text-line">·</span>;
+}
+
+export function Passbook({
+  rows,
+  rounds,
+  current = null,
+  cells,
+  end,
+}: {
+  rows: { key: string; label: ReactNode }[];
+  rounds: number;
+  current?: number | null;
+  cells: Cell[][];
+  end?: ReactNode[];
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-ink/70">
+            <th className="sticky left-0 z-10 bg-card py-2 pr-4 text-left font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-muted">
+              Member
+            </th>
+            {Array.from({ length: rounds }, (_, r) => (
+              <th
+                key={r}
+                className={`w-12 py-2 text-center font-mono text-[10px] font-normal tracking-[0.08em] ${
+                  r === current ? "bg-paper-2 text-ink" : "text-muted"
+                }`}
+              >
+                {String(r + 1).padStart(2, "0")}
+              </th>
+            ))}
+            {end && (
+              <th className="py-2 pl-4 text-left font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-muted">
+                Note
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={row.key} className="border-b border-line last:border-b-0">
+              <td className="sticky left-0 z-10 whitespace-nowrap bg-card py-2.5 pr-4">{row.label}</td>
+              {Array.from({ length: rounds }, (_, r) => (
+                <td key={r} className={`h-12 text-center align-middle ${r === current ? "bg-paper-2" : ""}`}>
+                  <span className="inline-flex items-center justify-center">
+                    <CellMark cell={cells[i]?.[r] ?? { state: "empty" }} />
+                  </span>
+                </td>
+              ))}
+              {end && (
+                <td className="whitespace-nowrap py-2.5 pl-4 font-mono text-[11px] text-muted">{end[i]}</td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

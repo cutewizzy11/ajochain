@@ -1,98 +1,121 @@
 @import "tailwindcss";
 
-/* AjoChain palette: deep market green + adire indigo + gold, on warm cream. */
+/*
+  AjoChain — "contribution card" system.
+  Paper, ink, adire indigo, and the red of a collector's rubber stamp.
+*/
 :root {
-  --bg: #f8f5ef;
-  --surface: #ffffff;
-  --surface-2: #f1ece2;
-  --ink: #1b1a17;
-  --muted: #6b665c;
-  --line: #e4ddcf;
-  --brand: #0b7a4b;
-  --brand-hover: #086640;
-  --brand-soft: #e1f1e8;
-  --gold: #c98a12;
-  --gold-soft: #fbefd5;
-  --indigo: #2f3a8f;
-  --danger: #b4321f;
-  --danger-soft: #fbe5e1;
+  --paper: #f3eee4;
+  --paper-2: #e9e2d3;
+  --card: #fbf8f2;
+  --ink: #1a1814;
+  --ink-2: #3a362e;
+  --muted: #706858;
+  --line: #d8cfbd;
+  --indigo: #25316e;
+  --indigo-2: #1b2455;
+  --stamp: #b2402a;
+  --ochre: #9a6a1c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0c110f;
-    --surface: #131a17;
-    --surface-2: #1a231f;
-    --ink: #ecebe5;
-    --muted: #9a978d;
-    --line: #26302b;
-    --brand: #2fbf7a;
-    --brand-hover: #49d08f;
-    --brand-soft: #143326;
-    --gold: #f0b43c;
-    --gold-soft: #33280f;
-    --indigo: #8f9bf0;
-    --danger: #f07a66;
-    --danger-soft: #3a1914;
+    --paper: #141310;
+    --paper-2: #1e1c17;
+    --card: #191814;
+    --ink: #ece5d6;
+    --ink-2: #cfc7b6;
+    --muted: #978f7f;
+    --line: #34302a;
+    --indigo: #a3adeb;
+    --indigo-2: #c0c7f3;
+    --stamp: #e27b5f;
+    --ochre: #d4a04a;
   }
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
   --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-brand: var(--brand);
-  --color-brand-hover: var(--brand-hover);
-  --color-brand-soft: var(--brand-soft);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
   --color-indigo: var(--indigo);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-indigo-2: var(--indigo-2);
+  --color-stamp: var(--stamp);
+  --color-ochre: var(--ochre);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-fraunces);
+}
+
+html {
+  background: var(--paper);
 }
 
 body {
-  background: var(--bg);
+  background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-feature-settings: "ss02";
 }
 
 ::selection {
-  background: var(--brand-soft);
+  background: color-mix(in srgb, var(--indigo) 22%, transparent);
 }
 
-/* Subtle woven pattern used behind hero sections. */
-.weave {
-  background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 0);
-  background-size: 18px 18px;
+:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover active:scale-[.98] disabled:pointer-events-none disabled:opacity-50 dark:text-[#06140d];
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] bg-ink px-4 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-indigo disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink;
   }
   .btn-lg {
-    @apply px-6 py-3 text-base;
+    @apply px-5 py-3 text-[15px];
   }
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium transition hover:bg-surface-2 active:scale-[.98] disabled:pointer-events-none disabled:opacity-50;
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border border-ink/70 bg-transparent px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink;
   }
-  .card {
-    @apply rounded-2xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(0,0,0,.04)];
+  .link {
+    @apply underline decoration-line decoration-1 underline-offset-4 transition-colors hover:decoration-ink;
+  }
+  .sheet {
+    @apply rounded-[4px] border border-line bg-card;
   }
   .input {
-    @apply w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/15;
+    @apply w-full rounded-[3px] border border-line bg-card px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-ink;
   }
   .label {
-    @apply mb-1.5 block text-xs font-medium text-muted;
+    @apply mb-1.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-muted;
   }
-  .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[.14em] text-brand;
+  .kicker {
+    @apply font-mono text-[11px] uppercase tracking-[0.12em] text-muted;
+  }
+  .display {
+    @apply font-display tracking-[-0.02em];
+    font-variation-settings: "opsz" 96;
+  }
+  .figure {
+    @apply font-display tabular-nums tracking-[-0.01em];
+    font-variation-settings: "opsz" 48;
+  }
+  /* Ruled ledger paper */
+  .ruled {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      color-mix(in srgb, var(--line) 70%, transparent) 31px,
+      color-mix(in srgb, var(--line) 70%, transparent) 32px
+    );
+  }
+  .leader {
+    @apply flex-1 border-b border-dotted border-muted/50;
+    transform: translateY(-4px);
   }
 }
