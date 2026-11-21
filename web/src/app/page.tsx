@@ -41,6 +41,7 @@ const facts = [
   { figure: "0.00001 XLM", label: "Base network fee per payment" },
   { figure: "~5s", label: "For a contribution to settle" },
   { figure: "USDC", label: "Dollar savings, issued by Circle" },
+  { figure: "₦ in · ₦ out", label: "Top up from and cash out to your bank via a licensed Stellar anchor (SEP-24). The pot never leaves the contract." },
   { figure: "Freighter · LOBSTR · xBull", label: "Wallets people already use" },
 ];
 
@@ -136,7 +137,7 @@ export default function Home() {
 
       <section>
         <p className="kicker">Why Stellar</p>
-        <dl className="mt-6 grid border-t border-ink/70 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-6 grid border-t border-ink/70 sm:grid-cols-2 lg:grid-cols-5">
           {facts.map((f, i) => (
             <Reveal key={f.label} delay={i * 90} className="border-b border-line py-6 sm:pr-6 lg:border-b-0 lg:border-r lg:last:border-r-0 lg:[&:not(:first-child)]:pl-6">
               <dt className="figure text-2xl">{f.figure}</dt>

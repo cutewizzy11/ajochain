@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ajo, Circle, fromUnits, Reputation, toUnits } from "@/lib/ajo";
 import { AJO_CONTRACT_ID, TOKEN_CONTRACT_ID, TOKEN_SYMBOL } from "@/lib/config";
 import { useWallet } from "@/lib/wallet";
+import { naira, useNgnRate } from "@/lib/anchor";
 import { CountUp } from "@/components/motion";
 import { Alert, Avatar, Logo, Progress, Score, StatusBadge, short } from "@/components/ui";
 
@@ -29,6 +30,8 @@ export default function Dashboard() {
   const [members, setMembers] = useState(5);
   const [period, setPeriod] = useState(PERIODS[2].secs);
   const [joinId, setJoinId] = useState("");
+  const [inNgn, setInNgn] = useState(false);
+  const { rate, live } = useNgnRate(TOKEN_SYMBOL);
 
   const load = useCallback(async () => {
     if (!address || !AJO_CONTRACT_ID) return;
@@ -87,7 +90,8 @@ export default function Dashboard() {
   const total = rep ? rep.on_time + rep.late : 0;
   const score = total ? Math.round((rep!.on_time / total) * 100) : null;
   const amt = Number(amount);
-  const potPreview = Number.isFinite(amt) && amt > 0 ? amt * members : 0;
+  const tokenAmt = Number.isFinite(amt) && amt > 0 ? (inNgn ? amt / rate : amt) : 0;
+  const potPreview = tokenAmt * members;
   const cadence = PERIODS.find((p) => p.secs === period)?.short ?? "";
 
   return (
@@ -145,7 +149,7 @@ export default function Dashboard() {
           <ul className="divide-y divide-line">
             {circles.map((c, i) => (
               <li key={c.id} className="fade-up" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
-                <CircleRow c={c} me={address} />
+                <CircleRow c={c} me={address} rate={rate} />
               </li>
             ))}
           </ul>
@@ -158,7 +162,7 @@ export default function Dashboard() {
           onSubmit={(e) => {
             e.preventDefault();
             run(async () => {
-              const id = await ajo.createCircle(address, sign, TOKEN_CONTRACT_ID, toUnits(amount), members, period);
+              const id = await ajo.createCircle(address, sign, TOKEN_CONTRACT_ID, toUnits(tokenAmt.toFixed(7)), members, period);
               router.push(`/circle/${id}`);
             });
           }}
@@ -169,8 +173,33 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="label">Contribution per round ({TOKEN_SYMBOL})</label>
+              <div className="flex items-baseline justify-between">
+                <label className="label">Contribution per round</label>
+                <div className="flex overflow-hidden rounded-[3px] border border-line font-mono text-[10px]">
+                  {[false, true].map((ngn) => (
+                    <button
+                      type="button"
+                      key={String(ngn)}
+                      aria-pressed={inNgn === ngn}
+                      onClick={() => {
+                        if (ngn === inNgn) return;
+                        const v = Number(amount);
+                        if (Number.isFinite(v) && v > 0) setAmount(ngn ? String(Math.round(v * rate)) : (v / rate).toFixed(2));
+                        setInNgn(ngn);
+                      }}
+                      className={`px-2 py-0.5 ${inNgn === ngn ? "bg-ink text-paper" : "text-muted"}`}
+                    >
+                      {ngn ? "₦" : TOKEN_SYMBOL}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <input className="input font-mono" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
+              <p className="mt-1 font-mono text-[10px] text-muted">
+                {inNgn ? `= ${tokenAmt.toFixed(2)} ${TOKEN_SYMBOL}` : `≈ ${naira(tokenAmt * rate)}`} · 1 {TOKEN_SYMBOL} ≈{" "}
+                {naira(rate)}
+                {live ? "" : " (est.)"}
+              </p>
             </div>
             <div>
               <label className="label">Members (2–50)</label>
@@ -210,6 +239,7 @@ export default function Dashboard() {
             <span className="figure text-xl">
               <CountUp value={potPreview} duration={450} /> {TOKEN_SYMBOL}
             </span>
+            <span className="font-mono text-[11px] text-muted">≈ {naira(potPreview * rate)}</span>
             <span className="font-mono text-[11px] text-muted">{cadence}</span>
           </div>
           <button className="btn w-full" disabled={busy || !TOKEN_CONTRACT_ID}>
@@ -262,7 +292,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-function CircleRow({ c, me }: { c: Circle; me: string }) {
+function CircleRow({ c, me, rate }: { c: Circle; me: string; rate: number }) {
   const open = c.status === "Open";
   const myTurn = c.status === "Active" && c.members[c.round] === me;
   return (
@@ -276,7 +306,8 @@ function CircleRow({ c, me }: { c: Circle; me: string }) {
           {fromUnits(c.amount * BigInt(c.max_members))} <span className="font-mono text-xs text-muted">{TOKEN_SYMBOL} pot</span>
         </p>
         <p className="mt-0.5 text-xs text-muted">
-          {fromUnits(c.amount)} {TOKEN_SYMBOL} × {c.max_members} members
+          {fromUnits(c.amount)} {TOKEN_SYMBOL} × {c.max_members} members · ≈{" "}
+          {naira(Number(fromUnits(c.amount * BigInt(c.max_members))) * rate)}
           {myTurn && <span className="ml-2 font-medium text-stamp">Your pot this round</span>}
         </p>
       </div>

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ajo, Circle, fromUnits, Payout } from "@/lib/ajo";
 import { TOKEN_SYMBOL } from "@/lib/config";
 import { useWallet } from "@/lib/wallet";
+import { ANCHOR_ASSET, ANCHOR_DOMAIN, naira, rampFlow, useNgnRate } from "@/lib/anchor";
 import {
   Alert,
   Avatar,
@@ -20,11 +21,12 @@ import {
 } from "@/components/ui";
 import { CountUp, Loader } from "@/components/motion";
 
-const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent authorised"]);
+const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent authorised", "Anchor opened — finish in the popup"]);
 
 export function CircleView() {
   const id = Number(useParams<{ id: string }>().id);
   const { address, connect, sign } = useWallet();
+  const { rate } = useNgnRate(TOKEN_SYMBOL);
   const [c, setC] = useState<Circle | null>(null);
   const [paid, setPaid] = useState<string[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -169,7 +171,7 @@ export function CircleView() {
               <CountUp value={Number(fromUnits(pot))} /> <span className="font-mono text-base text-muted">{TOKEN_SYMBOL}</span>
             </p>
             <p className="mt-3 font-mono text-xs text-muted">
-              {fromUnits(c.amount)} {TOKEN_SYMBOL} × {c.max_members} members
+              {fromUnits(c.amount)} {TOKEN_SYMBOL} × {c.max_members} members · ≈ {naira(Number(fromUnits(pot)) * rate)}
             </p>
           </div>
 
@@ -253,8 +255,28 @@ export function CircleView() {
               disabled={busy || iPaid}
               onClick={() => run(() => ajo.contribute(address, sign, id), "Contribution recorded")}
             >
-              {busy ? "Waiting for wallet…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL}`}
+              {busy ? "Waiting for wallet…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
             </button>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                className="btn-quiet"
+                disabled={busy}
+                onClick={() => run(() => rampFlow("deposit", address, sign), "Anchor opened — finish in the popup")}
+              >
+                ₦ Add naira
+              </button>
+              <button
+                className="btn-quiet"
+                disabled={busy}
+                onClick={() => run(() => rampFlow("withdraw", address, sign), "Anchor opened — finish in the popup")}
+              >
+                Cash out to bank
+              </button>
+            </div>
+            <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted">
+              Naira in/out via a licensed Stellar anchor ({ANCHOR_DOMAIN}, {ANCHOR_ASSET}, SEP-24). The anchor only
+              converts at the edges; it never touches the pot, which only this contract can release.
+            </p>
           </div>
         )}
       </section>
