@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { WalletProvider } from "@/lib/wallet";
 import { Nav } from "@/components/Nav";
@@ -28,10 +29,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <WalletProvider>
-          <Nav />
-          <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8">{children}</main>
-          <footer className="text-center text-xs opacity-60 py-6">
-            AjoChain · built on Stellar Soroban · testnet
+          <Suspense fallback={<div className="h-16 border-b border-line" />}>
+            <Nav />
+          </Suspense>
+          <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-10">{children}</main>
+          <footer className="border-t border-line">
+            <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted sm:flex-row">
+              <span>AjoChain · trustless ajo, esusu &amp; susu</span>
+              <span>Built on Stellar Soroban · Testnet</span>
+            </div>
           </footer>
         </WalletProvider>
       </body>
