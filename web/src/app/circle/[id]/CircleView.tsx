@@ -15,6 +15,7 @@ export function CircleView() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [deadline, setDeadline] = useState<bigint | null>(null);
   const [agent, setAgent] = useState("");
+  const [rounds, setRounds] = useState(3);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -166,7 +167,24 @@ export function CircleView() {
             Authorise an AI agent address to pay your contribution on time. It can only spend what you
             allow the contract via a token allowance — you stay in control.
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <span className="text-sm whitespace-nowrap">1. Allow</span>
+            <input className="input w-20" type="number" min={1} value={rounds} onChange={(e) => setRounds(Number(e.target.value))} />
+            <span className="text-sm whitespace-nowrap">
+              rounds = {fromUnits(c.amount * BigInt(rounds))} {TOKEN_SYMBOL}
+            </span>
+            <button
+              className="btn-ghost"
+              disabled={busy || rounds < 1}
+              onClick={() =>
+                run(() => ajo.approve(address, sign, c.token, c.amount * BigInt(rounds)), "Allowance set")
+              }
+            >
+              Approve
+            </button>
+          </div>
+          <div className="flex gap-2 items-center">
+            <span className="text-sm whitespace-nowrap">2. Agent</span>
             <input className="input font-mono" placeholder="G… agent address" value={agent} onChange={(e) => setAgent(e.target.value)} />
             <button
               className="btn"

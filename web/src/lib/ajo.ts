@@ -82,13 +82,13 @@ function normaliseCircle(raw: Record<string, unknown>): Circle {
 
 // ----- core ----------------------------------------------------------------
 
-async function simulate(source: string, method: string, args: xdr.ScVal[]) {
+async function simulate(source: string, method: string, args: xdr.ScVal[], contractId = AJO_CONTRACT_ID) {
   const account = await server.getAccount(source);
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
     networkPassphrase: NETWORK_PASSPHRASE,
   })
-    .addOperation(new Contract(AJO_CONTRACT_ID).call(method, ...args))
+    .addOperation(new Contract(contractId).call(method, ...args))
     .setTimeout(30)
     .build();
   return { tx, sim: await server.simulateTransaction(tx) };
@@ -105,8 +105,9 @@ async function write<T = unknown>(
   sign: SignFn,
   method: string,
   args: xdr.ScVal[],
+  contractId = AJO_CONTRACT_ID,
 ): Promise<T> {
-  const { tx, sim } = await simulate(source, method, args);
+  const { tx, sim } = await simulate(source, method, args, contractId);
   if (rpc.Api.isSimulationError(sim)) throw new Error(friendlyError(sim.error));
   const prepared = rpc.assembleTransaction(tx, sim).build();
   const signed = await sign(prepared.toXDR());
@@ -152,6 +153,16 @@ export const ajo = {
 
   setAgent: (me: string, sign: SignFn, id: number, agent: string) =>
     write(me, sign, "set_agent", [u32(id), addr(me), addr(agent)]),
+
+  /**
+   * Let the AjoChain contract pull up to `amount` of the token from `me`
+   * (needed for auto-pay agents). Expires after ~`days` days of ledgers.
+   */
+  approve: async (me: string, sign: SignFn, token: string, amount: bigint, days = 30) => {
+    const { sequence } = await server.getLatestLedger();
+    const expiry = sequence + Math.round((days * 86_400) / 5);
+    return write(me, sign, "approve", [addr(me), addr(AJO_CONTRACT_ID), i128(amount), u32(expiry)], token);
+  },
 
   getCircle: async (viewer: string, id: number) =>
     normaliseCircle(await read<Record<string, unknown>>(viewer, "get_circle", [u32(id)])),

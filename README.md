@@ -16,6 +16,7 @@ holds everyone's money. AjoChain puts the pot in a Soroban smart contract instea
 ```
 contracts/ajo/   Soroban smart contract (Rust) + unit tests
 web/             Next.js 16 frontend (Stellar Wallets Kit, stellar-sdk)
+agent/           Auto-pay agent (Node) that pays contributions for members who opt in
 ```
 
 ## Contract API
@@ -65,6 +66,22 @@ npm run dev
 
 Open http://localhost:3000 and connect Freighter, xBull, LOBSTR or another wallet set to **testnet**.
 The account must be funded (use Friendbot) and must hold the contribution token.
+
+## Auto-pay agent
+
+1. Create an agent account: `stellar keys generate agent --network testnet --fund`. Get its secret with `stellar keys show agent`.
+2. A member opens their circle in the app and clicks **Approve**. This lets the contract pull N rounds' worth of the token, and nothing more.
+3. The member then pastes the agent's `G...` address and clicks **Authorise**.
+4. Run the agent:
+
+```bash
+cd agent
+cp .env.example .env   # set AGENT_SECRET and AJO_CONTRACT_ID
+npm install
+npm start              # or `npm run once` for a single pass
+```
+
+The agent scans every active circle and finds the members who authorised it. It calls `contribute_for` once `PAY_AFTER` of the round has passed. It never holds member funds. A member can revoke it at any time with `remove_agent`, or by setting their allowance to 0.
 
 ## Demo script (2 minutes)
 

@@ -1,0 +1,13 @@
+{
+  "name": "ajochain-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env agent.mjs",
+    "once": "node --env-file-if-exists=.env agent.mjs --once"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^17.4.0"
+  }
+}
