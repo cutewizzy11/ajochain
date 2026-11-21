@@ -18,6 +18,7 @@ import {
   short,
   useNow,
 } from "@/components/ui";
+import { CountUp, Loader } from "@/components/motion";
 
 const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent authorised"]);
 
@@ -89,11 +90,7 @@ export function CircleView() {
     return msg ? (
       <Alert tone="error">{msg}</Alert>
     ) : (
-      <div className="space-y-4">
-        <div className="h-10 w-56 animate-pulse rounded-[3px] bg-paper-2" />
-        <div className="h-48 animate-pulse rounded-[4px] bg-paper-2" />
-        <div className="h-64 animate-pulse rounded-[4px] bg-paper-2" />
-      </div>
+      <Loader label="Reading the ledger" />
     );
   }
 
@@ -169,7 +166,7 @@ export function CircleView() {
           <div className="p-6 sm:p-8">
             <p className="kicker">Pot each round</p>
             <p className="figure mt-3 text-6xl leading-none">
-              {fromUnits(pot)} <span className="font-mono text-base text-muted">{TOKEN_SYMBOL}</span>
+              <CountUp value={Number(fromUnits(pot))} /> <span className="font-mono text-base text-muted">{TOKEN_SYMBOL}</span>
             </p>
             <p className="mt-3 font-mono text-xs text-muted">
               {fromUnits(c.amount)} {TOKEN_SYMBOL} × {c.max_members} members

@@ -4,17 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWallet } from "@/lib/wallet";
 import { Avatar, Logo, short } from "@/components/ui";
+import { useScrolled } from "@/components/motion";
 
 export { short };
 
 export function Nav() {
   const { address, connect, disconnect } = useWallet();
   const path = usePathname();
+  const scrolled = useScrolled();
   return (
-    <header className="border-b border-line bg-paper">
+    <header data-scrolled={scrolled} className="nav-glass sticky top-0 z-40 border-b border-line bg-paper data-[scrolled=true]:border-transparent">
       <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Logo />
+        <Link href="/" className="group flex items-center gap-2.5">
+          <span className="transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-[60deg]">
+            <Logo />
+          </span>
           <span className="font-display text-xl tracking-[-0.01em]">AjoChain</span>
         </Link>
         <nav className="flex items-center gap-5">

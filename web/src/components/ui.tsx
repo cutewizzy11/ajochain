@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { CountUp } from "./motion";
 import type { Circle } from "@/lib/ajo";
 
 export const short = (a: string) => `${a.slice(0, 4)}…${a.slice(-4)}`;
@@ -86,7 +87,7 @@ export function Progress({ value, max, tone = "brand" }: { value: number; max: n
 export function Score({ score }: { score: number | null }) {
   return (
     <div className="flex items-baseline gap-1">
-      <span className="figure text-6xl leading-none">{score === null ? "—" : score}</span>
+      <span className="figure text-6xl leading-none">{score === null ? "—" : <CountUp value={score} />}</span>
       {score !== null && <span className="font-mono text-xs text-muted">/100</span>}
     </div>
   );
@@ -120,16 +121,17 @@ export function Logo({ size = 28 }: { size?: number }) {
 
 export type Cell = { state: "pot" | "paid" | "due" | "empty"; turn?: boolean };
 
-function CellMark({ cell }: { cell: Cell }) {
+function CellMark({ cell, d = 0 }: { cell: Cell; d?: number }) {
+  const style = { "--d": `${d}ms` } as CSSProperties;
   if (cell.state === "pot")
     return (
-      <span className="inline-flex h-8 w-8 -rotate-12 items-center justify-center rounded-full border-[1.5px] border-stamp font-mono text-[8px] font-medium tracking-[0.1em] text-stamp">
+      <span style={style} className="stamp-mark inline-flex h-8 w-8 -rotate-12 items-center justify-center rounded-full border-[1.5px] border-stamp font-mono text-[8px] font-medium tracking-[0.1em] text-stamp">
         POT
       </span>
     );
   if (cell.state === "paid")
     return (
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-label="paid" className="text-indigo">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-label="paid" className="tick text-indigo" style={style}>
         <path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     );
@@ -137,10 +139,11 @@ function CellMark({ cell }: { cell: Cell }) {
     return cell.turn ? (
       <span
         aria-label="due, receives pot"
-        className="inline-block h-8 w-8 rounded-full border-[1.5px] border-dashed border-stamp"
+        style={style}
+        className="cell-in inline-block h-8 w-8 rounded-full border-[1.5px] border-dashed border-stamp"
       />
     ) : (
-      <span aria-label="due" className="inline-block h-4 w-4 rounded-[2px] border border-dashed border-muted" />
+      <span aria-label="due" style={style} className="cell-in inline-block h-4 w-4 rounded-[2px] border border-dashed border-muted" />
     );
   return <span className="text-line">·</span>;
 }
@@ -190,7 +193,7 @@ export function Passbook({
               {Array.from({ length: rounds }, (_, r) => (
                 <td key={r} className={`h-12 text-center align-middle ${r === current ? "bg-paper-2" : ""}`}>
                   <span className="inline-flex items-center justify-center">
-                    <CellMark cell={cells[i]?.[r] ?? { state: "empty" }} />
+                    <CellMark cell={cells[i]?.[r] ?? { state: "empty" }} d={300 + r * 160 + i * 45} />
                   </span>
                 </td>
               ))}

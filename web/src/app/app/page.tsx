@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ajo, Circle, fromUnits, Reputation, toUnits } from "@/lib/ajo";
 import { AJO_CONTRACT_ID, TOKEN_CONTRACT_ID, TOKEN_SYMBOL } from "@/lib/config";
 import { useWallet } from "@/lib/wallet";
+import { CountUp } from "@/components/motion";
 import { Alert, Avatar, Logo, Progress, Score, StatusBadge, short } from "@/components/ui";
 
 const PERIODS = [
@@ -104,7 +105,7 @@ export default function Dashboard() {
 
       {msg && <Alert tone="error">{msg}</Alert>}
 
-      <section className="sheet grid gap-8 p-6 sm:grid-cols-[auto_1fr_auto] sm:items-end sm:p-8">
+      <section className="sheet fade-up grid gap-8 p-6 sm:grid-cols-[auto_1fr_auto] sm:items-end sm:p-8">
         <div>
           <p className="kicker mb-3">Savings reputation</p>
           <Score score={score} />
@@ -132,7 +133,7 @@ export default function Dashboard() {
           <div className="divide-y divide-line">
             {[0, 1].map((i) => (
               <div key={i} className="py-5">
-                <div className="h-14 animate-pulse rounded-[3px] bg-paper-2" />
+                <div className="shimmer h-14 rounded-[3px]" style={{ animationDelay: `${i * 120}ms` }} />
               </div>
             ))}
           </div>
@@ -142,8 +143,8 @@ export default function Dashboard() {
           </div>
         ) : (
           <ul className="divide-y divide-line">
-            {circles.map((c) => (
-              <li key={c.id}>
+            {circles.map((c, i) => (
+              <li key={c.id} className="fade-up" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
                 <CircleRow c={c} me={address} />
               </li>
             ))}
@@ -207,7 +208,7 @@ export default function Dashboard() {
             <span className="text-ink-2">Each pot</span>
             <span className="leader" />
             <span className="figure text-xl">
-              {potPreview.toLocaleString()} {TOKEN_SYMBOL}
+              <CountUp value={potPreview} duration={450} /> {TOKEN_SYMBOL}
             </span>
             <span className="font-mono text-[11px] text-muted">{cadence}</span>
           </div>
@@ -256,7 +257,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="pr-6 last:pr-0">
       <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">{label}</dt>
-      <dd className="figure mt-1 text-3xl">{value}</dd>
+      <dd className="figure mt-1 text-3xl">{typeof value === "number" ? <CountUp value={value} duration={800} /> : value}</dd>
     </div>
   );
 }
@@ -295,7 +296,7 @@ function CircleRow({ c, me }: { c: Circle; me: string }) {
       </div>
       <div className="col-start-2 row-start-1 flex items-center gap-3 justify-self-end sm:col-start-auto sm:row-start-auto">
         <StatusBadge status={c.status} />
-        <span className="hidden text-muted transition-transform group-hover:translate-x-0.5 sm:inline">→</span>
+        <span className="nudge hidden text-muted sm:inline">→</span>
       </div>
     </Link>
   );

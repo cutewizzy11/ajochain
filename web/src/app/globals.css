@@ -73,13 +73,13 @@ body {
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-[3px] bg-ink px-4 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-indigo disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink;
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] bg-ink px-4 py-2.5 text-sm font-medium text-paper transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-indigo active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink;
   }
   .btn-lg {
     @apply px-5 py-3 text-[15px];
   }
   .btn-quiet {
-    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border border-ink/70 bg-transparent px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink;
+    @apply inline-flex items-center justify-center gap-2 rounded-[3px] border border-ink/70 bg-transparent px-4 py-2.5 text-sm font-medium text-ink transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-ink hover:text-paper active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink;
   }
   .link {
     @apply underline decoration-line decoration-1 underline-offset-4 transition-colors hover:decoration-ink;
@@ -119,3 +119,128 @@ body {
     transform: translateY(-4px);
   }
 }
+
+/* ───────────────────────── Motion ─────────────────────────
+   One easing, one rhythm. Things settle like paper on a desk. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-stamp: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes rise {
+  from { transform: translateY(105%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes draw {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes thud {
+  0% { opacity: 0; transform: scale(1.9); }
+  55% { opacity: 1; transform: scale(0.92); }
+  75% { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ink-bleed {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--stamp) 35%, transparent); }
+  100% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--stamp) 0%, transparent); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes dot {
+  0%, 100% { opacity: 0.18; }
+  20% { opacity: 1; }
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+@keyframes sheen {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes due-breathe {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+
+/* Headline lines rise out of a mask */
+.line-mask { display: block; overflow: hidden; padding-bottom: 0.06em; margin-bottom: -0.06em; }
+.line-mask > span { display: block; animation: rise 1s var(--ease-out) both; animation-delay: var(--d, 0ms); }
+
+.fade-up { animation: fade-up 0.9s var(--ease-out) both; animation-delay: var(--d, 0ms); }
+.page-in { animation: page-in 0.6s var(--ease-out) both; }
+
+/* Scroll reveal (class toggled by <Reveal>) */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out); transition-delay: var(--d, 0ms); }
+.reveal.in { opacity: 1; transform: none; }
+
+/* Passbook marks */
+.tick path { stroke-dasharray: 20; animation: draw 0.5s var(--ease-out) both; animation-delay: var(--d, 0ms); }
+.stamp-mark { animation: thud 0.55s var(--ease-stamp) both, ink-bleed 0.9s ease-out both; animation-delay: var(--d, 0ms), calc(var(--d, 0ms) + 0.25s); }
+.due-ring { animation: due-breathe 14s linear infinite; }
+.cell-in { animation: fade-up 0.5s var(--ease-out) both; animation-delay: var(--d, 0ms); }
+
+/* Logo loader: the six members light up in turn, the circle turns */
+.loader-dot { animation: dot 1.2s ease-in-out infinite; animation-delay: calc(var(--i) * 0.2s); }
+.loader-ring { transform-origin: 16px 16px; animation: spin-slow 7s linear infinite; }
+
+/* Shimmer skeleton, like light across paper */
+.shimmer {
+  background: linear-gradient(90deg, var(--paper-2) 0%, color-mix(in srgb, var(--card) 80%, var(--paper-2)) 50%, var(--paper-2) 100%);
+  background-size: 200% 100%;
+  animation: sheen 1.6s linear infinite;
+}
+
+.marquee { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee-track { display: flex; width: max-content; animation: marquee 48s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+/* Arrow that nudges on hover */
+.nudge { display: inline-block; transition: transform 0.35s var(--ease-out); }
+a:hover .nudge, button:hover .nudge, .group:hover .nudge { transform: translateX(4px); }
+
+/* Sticky nav glass */
+.nav-glass { transition: background-color 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out); }
+.nav-glass[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  box-shadow: 0 1px 0 var(--line), 0 10px 30px -18px color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+/* Lift for sheets on hover */
+.lift { transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out); }
+.lift:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--ink) 45%, transparent); }
+
+/* Route progress bar */
+.route-bar { transform-origin: left; transition: transform 0.5s var(--ease-out), opacity 0.4s ease 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; animation-delay: 0ms !important; transition-delay: 0ms !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* Hand-drawn stamp underline that inks in after the headline lands */
+.ink-underline { position: relative; white-space: nowrap; }
+.ink-underline::after {
+  content: ""; position: absolute; left: -2%; right: -2%; bottom: 0.04em; height: 0.14em;
+  background: var(--stamp); opacity: 0.85; border-radius: 2px;
+  transform: scaleX(0) rotate(-1.2deg); transform-origin: left center;
+  animation: underline-in 0.9s var(--ease-out) 0.95s forwards;
+}
+@keyframes underline-in { to { transform: scaleX(1) rotate(-1.2deg); } }
+@media (prefers-reduced-motion: reduce) { .ink-underline::after { animation: none; transform: rotate(-1.2deg); } }

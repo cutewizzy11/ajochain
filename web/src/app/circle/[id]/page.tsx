@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { CircleView } from "./CircleView";
+import { Loader } from "@/components/motion";
 
 export default function CirclePage() {
   return (
-    <Suspense fallback={<p className="font-mono text-xs text-muted">Loading circle…</p>}>
+    <Suspense fallback={<Loader label="Opening circle" />}>
       <CircleView />
     </Suspense>
   );
