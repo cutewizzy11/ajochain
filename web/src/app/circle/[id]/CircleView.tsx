@@ -77,11 +77,11 @@ export function CircleView() {
 
   if (!address) {
     return (
-      <div className="sheet ruled mx-auto max-w-md px-8 py-12">
+      <div className="sheet ruled mx-auto max-w-md px-6 py-10 sm:px-8 sm:py-12">
         <Logo size={44} />
         <h1 className="display mt-6 text-3xl">You&apos;re invited to circle #{id}</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-2">Connect a Stellar testnet wallet to view it and join.</p>
-        <button className="btn btn-lg mt-8" onClick={connect}>
+        <button className="btn btn-lg mt-8 w-full sm:w-auto" onClick={connect}>
           Connect wallet
         </button>
       </div>
@@ -165,9 +165,9 @@ export function CircleView() {
 
       <section className="sheet">
         <div className="grid sm:grid-cols-[1.3fr_1fr]">
-          <div className="p-6 sm:p-8">
+          <div className="p-5 sm:p-8">
             <p className="kicker">Pot each round</p>
-            <p className="figure mt-3 text-6xl leading-none">
+            <p className="figure mt-3 break-words text-5xl leading-none sm:text-6xl">
               <CountUp value={Number(fromUnits(pot))} /> <span className="font-mono text-base text-muted">{TOKEN_SYMBOL}</span>
             </p>
             <p className="mt-3 font-mono text-xs text-muted">
@@ -175,7 +175,7 @@ export function CircleView() {
             </p>
           </div>
 
-          <div className="border-t border-line p-6 sm:border-l sm:border-t-0 sm:p-8">
+          <div className="border-t border-line p-5 sm:border-l sm:border-t-0 sm:p-8">
             {active && recipient ? (
               <div className="space-y-4">
                 <p className="kicker">
@@ -222,7 +222,7 @@ export function CircleView() {
         </div>
 
         {c.status === "Open" && (
-          <div className="border-t border-line bg-paper-2/50 px-6 py-4 sm:px-8">
+          <div className="border-t border-line bg-paper-2/50 px-4 py-4 sm:px-8">
             {isMember ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input className="input font-mono text-xs" readOnly value={share} onFocus={(e) => e.target.select()} />
@@ -249,7 +249,7 @@ export function CircleView() {
           </div>
         )}
         {active && isMember && (
-          <div className="border-t border-line bg-paper-2/50 px-6 py-4 sm:px-8">
+          <div className="border-t border-line bg-paper-2/50 px-4 py-4 sm:px-8">
             <button
               className="btn btn-lg w-full"
               disabled={busy || iPaid}
@@ -257,7 +257,7 @@ export function CircleView() {
             >
               {busy ? "Waiting for wallet…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
             </button>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid gap-2 min-[380px]:grid-cols-2">
               <button
                 className="btn-quiet"
                 disabled={busy}
@@ -282,16 +282,16 @@ export function CircleView() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <section className="sheet p-5 sm:p-6">
-          <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
+        <section className="sheet min-w-0 p-4 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line pb-3">
             <h2 className="font-display text-xl">Contribution card</h2>
-            <span className="font-mono text-[11px] text-muted">PAYOUT ORDER = ROW ORDER</span>
+            <span className="font-mono text-[10px] text-muted sm:text-[11px]">PAYOUT ORDER = ROW ORDER</span>
           </div>
           <Passbook rows={rows} rounds={c.max_members} current={active ? c.round : null} cells={cells} end={notes} />
         </section>
 
         {isMember && c.status !== "Completed" ? (
-          <section className="sheet self-start p-6">
+          <section className="sheet min-w-0 self-start p-5 sm:p-6">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-display text-xl">Auto-pay agent</h2>
               <span className="kicker">Optional</span>
@@ -302,7 +302,7 @@ export function CircleView() {
 
             <div className="mt-5 border-t border-line">
               <Step n={1} done={approved} title="Set a spending limit">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     className="input w-20 font-mono"
                     type="number"
@@ -345,7 +345,7 @@ export function CircleView() {
             </div>
           </section>
         ) : (
-          <section className="sheet self-start p-6">
+          <section className="sheet min-w-0 self-start p-5 sm:p-6">
             <h2 className="font-display text-xl">How this circle works</h2>
             <ul className="mt-3 text-sm leading-relaxed text-ink-2">
               <li className="border-t border-line py-3">

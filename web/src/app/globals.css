@@ -55,7 +55,16 @@ html {
   background: var(--paper);
 }
 
+html, body {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-tap-highlight-color: transparent;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-plex-sans), system-ui, sans-serif;
@@ -89,6 +98,10 @@ body {
   }
   .input {
     @apply w-full rounded-[3px] border border-line bg-card px-3 py-2.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-ink;
+  }
+  @media (pointer: coarse) {
+    .input { font-size: 16px; }
+    .btn, .btn-quiet { min-height: 44px; }
   }
   .label {
     @apply mb-1.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-muted;

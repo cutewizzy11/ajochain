@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -25,6 +25,13 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f3eee4",
+};
+
 export const metadata: Metadata = {
   title: "AjoChain — ajo without anybody holding the money",
   description:
@@ -43,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={<div className="h-[60px] border-b border-line" />}>
             <Nav />
           </Suspense>
-          <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 sm:py-14">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-14">{children}</main>
           <footer className="border-t border-line">
             <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 font-mono text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
               <span>AjoChain — the esusu card, kept by code.</span>

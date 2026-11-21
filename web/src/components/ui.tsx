@@ -87,7 +87,7 @@ export function Progress({ value, max, tone = "brand" }: { value: number; max: n
 export function Score({ score }: { score: number | null }) {
   return (
     <div className="flex items-baseline gap-1">
-      <span className="figure text-6xl leading-none">{score === null ? "—" : <CountUp value={score} />}</span>
+      <span className="figure text-5xl leading-none sm:text-6xl">{score === null ? "—" : <CountUp value={score} />}</span>
       {score !== null && <span className="font-mono text-xs text-muted">/100</span>}
     </div>
   );
@@ -125,7 +125,7 @@ function CellMark({ cell, d = 0 }: { cell: Cell; d?: number }) {
   const style = { "--d": `${d}ms` } as CSSProperties;
   if (cell.state === "pot")
     return (
-      <span style={style} className="stamp-mark inline-flex h-8 w-8 -rotate-12 items-center justify-center rounded-full border-[1.5px] border-stamp font-mono text-[8px] font-medium tracking-[0.1em] text-stamp">
+      <span style={style} className="stamp-mark inline-flex h-7 w-7 -rotate-12 items-center sm:h-8 sm:w-8 justify-center rounded-full border-[1.5px] border-stamp font-mono text-[8px] font-medium tracking-[0.1em] text-stamp">
         POT
       </span>
     );
@@ -140,7 +140,7 @@ function CellMark({ cell, d = 0 }: { cell: Cell; d?: number }) {
       <span
         aria-label="due, receives pot"
         style={style}
-        className="cell-in inline-block h-8 w-8 rounded-full border-[1.5px] border-dashed border-stamp"
+        className="cell-in inline-block h-7 w-7 rounded-full sm:h-8 sm:w-8 border-[1.5px] border-dashed border-stamp"
       />
     ) : (
       <span aria-label="due" style={style} className="cell-in inline-block h-4 w-4 rounded-[2px] border border-dashed border-muted" />
@@ -162,17 +162,17 @@ export function Passbook({
   end?: ReactNode[];
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="-mx-1 overflow-x-auto overscroll-x-contain px-1 [-webkit-overflow-scrolling:touch]">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-ink/70">
-            <th className="sticky left-0 z-10 bg-card py-2 pr-4 text-left font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-muted">
+            <th className="sticky left-0 z-10 bg-card py-2 pr-2 text-left sm:pr-4 font-mono text-[10px] font-normal uppercase tracking-[0.12em] text-muted">
               Member
             </th>
             {Array.from({ length: rounds }, (_, r) => (
               <th
                 key={r}
-                className={`w-12 py-2 text-center font-mono text-[10px] font-normal tracking-[0.08em] ${
+                className={`w-9 py-2 text-center sm:w-12 font-mono text-[10px] font-normal tracking-[0.08em] ${
                   r === current ? "bg-paper-2 text-ink" : "text-muted"
                 }`}
               >
@@ -189,9 +189,9 @@ export function Passbook({
         <tbody>
           {rows.map((row, i) => (
             <tr key={row.key} className="border-b border-line last:border-b-0">
-              <td className="sticky left-0 z-10 whitespace-nowrap bg-card py-2.5 pr-4">{row.label}</td>
+              <td className="sticky left-0 z-10 whitespace-nowrap bg-card py-2.5 pr-2 sm:pr-4">{row.label}</td>
               {Array.from({ length: rounds }, (_, r) => (
-                <td key={r} className={`h-12 text-center align-middle ${r === current ? "bg-paper-2" : ""}`}>
+                <td key={r} className={`h-11 text-center sm:h-12 align-middle ${r === current ? "bg-paper-2" : ""}`}>
                   <span className="inline-flex items-center justify-center">
                     <CellMark cell={cells[i]?.[r] ?? { state: "empty" }} d={300 + r * 160 + i * 45} />
                   </span>

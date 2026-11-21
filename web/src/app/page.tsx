@@ -51,7 +51,7 @@ export default function Home() {
       <section className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-center">
         <div>
           <p className="kicker fade-up" style={d(0)}>Esusu · Ajo · Susu — on Stellar</p>
-          <h1 className="display mt-5 text-5xl leading-[1.02] sm:text-6xl lg:text-[4.25rem]">
+          <h1 className="display mt-5 text-[2.6rem] leading-[1.02] min-[400px]:text-5xl sm:text-6xl lg:text-[4.25rem]">
             <span className="sr-only">Ajo, without anybody holding the money.</span>
             <span aria-hidden>
               {["Ajo, without", "anybody holding", "the money."].map((line, i) => (
@@ -69,11 +69,11 @@ export default function Home() {
               ))}
             </span>
           </h1>
-          <p className="fade-up mt-6 max-w-lg text-lg leading-relaxed text-ink-2" style={d(520)}>
+          <p className="fade-up mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-ink-2" style={d(520)}>
             You pay in 20 USDC on Friday. When everyone has paid, a contract on Stellar sends the pot to whoever&apos;s
             turn it is. There is no collector to trust, chase or lose.
           </p>
-          <div className="fade-up mt-9 flex flex-wrap gap-3" style={d(640)}>
+          <div className="fade-up mt-9 grid gap-3 min-[420px]:flex min-[420px]:flex-wrap" style={d(640)}>
             <Link href="/app" className="btn btn-lg">
               Open the app <span className="nudge">→</span>
             </Link>
@@ -86,7 +86,7 @@ export default function Home() {
         <figure className="sheet lift fade-up p-5 sm:p-6" style={d(260)}>
           <div className="mb-4 flex items-baseline justify-between border-b border-line pb-3">
             <span className="font-display text-lg">Contribution card</span>
-            <span className="font-mono text-[11px] text-muted">CIRCLE #0412 · WEEKLY</span>
+            <span className="font-mono text-[10px] text-muted sm:text-[11px]">#0412 · WEEKLY</span>
           </div>
           <Passbook
             rows={NAMES.map((n) => ({ key: n, label: <span className="text-sm">{n}</span> }))}
@@ -100,13 +100,13 @@ export default function Home() {
         </figure>
       </section>
 
-      <div className="marquee -mx-5 border-y border-line py-4 sm:-mx-8" aria-label="Rotating savings circles around the world">
+      <div className="marquee -mx-4 border-y border-line py-4 sm:-mx-8" aria-label="Rotating savings circles around the world">
         <div className="marquee-track">
           {[0, 1].map((k) => (
             <span key={k} aria-hidden={k === 1} className="flex shrink-0 items-center">
               {CIRCLES.map((c) => (
-                <span key={c} className="flex items-center font-display text-2xl text-ink-2">
-                  <span className="px-6 italic">{c}</span>
+                <span key={c} className="flex items-center font-display text-xl text-ink-2 sm:text-2xl">
+                  <span className="px-4 italic sm:px-6">{c}</span>
                   <span className="h-1.5 w-1.5 rounded-full bg-stamp" />
                 </span>
               ))}
@@ -116,14 +116,14 @@ export default function Home() {
       </div>
 
       <section id="how" className="scroll-mt-24">
-        <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_2fr] lg:gap-10">
           <Reveal>
             <p className="kicker">The method</p>
             <h2 className="display mt-3 text-4xl">How a round works</h2>
           </Reveal>
           <ol className="border-t border-ink/70">
             {steps.map((s, i) => (
-              <Reveal as="li" key={s.title} delay={i * 90} className="grid grid-cols-[3rem_1fr] gap-4 border-b border-line py-6">
+              <Reveal as="li" key={s.title} delay={i * 90} className="grid grid-cols-[2.25rem_1fr] gap-3 sm:grid-cols-[3rem_1fr] sm:gap-4 border-b border-line py-6">
                 <span className="font-mono text-sm text-muted">{String(i + 1).padStart(2, "0")}</span>
                 <div>
                   <h3 className="font-display text-xl">{s.title}</h3>
@@ -137,18 +137,18 @@ export default function Home() {
 
       <section>
         <p className="kicker">Why Stellar</p>
-        <dl className="mt-6 grid border-t border-ink/70 sm:grid-cols-2 lg:grid-cols-5">
+        <dl className="mt-6 grid border-t border-ink/70 sm:grid-cols-2 xl:grid-cols-5">
           {facts.map((f, i) => (
-            <Reveal key={f.label} delay={i * 90} className="border-b border-line py-6 sm:pr-6 lg:border-b-0 lg:border-r lg:last:border-r-0 lg:[&:not(:first-child)]:pl-6">
-              <dt className="figure text-2xl">{f.figure}</dt>
+            <Reveal key={f.label} delay={i * 90} className="border-b border-line py-6 sm:pr-6 sm:even:pl-6 xl:border-b-0 xl:border-r xl:last:border-r-0 xl:[&:not(:first-child)]:pl-6">
+              <dt className="figure text-2xl break-words">{f.figure}</dt>
               <dd className="mt-2 text-sm text-muted">{f.label}</dd>
             </Reveal>
           ))}
         </dl>
       </section>
 
-      <Reveal as="section" className="flex flex-col items-start justify-between gap-6 border-y border-ink/70 py-10 sm:flex-row sm:items-center">
-        <h2 className="display max-w-xl text-3xl sm:text-4xl">Start a circle with people you already save with.</h2>
+      <Reveal as="section" className="flex flex-col items-start justify-between gap-6 border-y border-ink/70 py-8 sm:flex-row sm:py-10 sm:items-center">
+        <h2 className="display max-w-xl text-2xl min-[400px]:text-3xl sm:text-4xl">Start a circle with people you already save with.</h2>
         <Link href="/app" className="btn btn-lg">
           Open the app <span className="nudge">→</span>
         </Link>
