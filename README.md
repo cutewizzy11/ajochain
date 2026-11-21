@@ -13,6 +13,8 @@ holds everyone's money. AjoChain puts the pot in a Soroban smart contract instea
 
 ## Live on testnet
 
+**Try it:** https://ajochain-rho.vercel.app (connect a testnet wallet such as Freighter)
+
 | | |
 |---|---|
 | AjoChain contract | [`CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB`](https://stellar.expert/explorer/testnet/contract/CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB) |
