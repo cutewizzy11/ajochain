@@ -37,6 +37,7 @@ export function CircleView() {
   const [msg, setMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [balance, setBalance] = useState<bigint | null>(null);
   const now = useNow();
 
   const load = useCallback(async () => {
@@ -48,6 +49,8 @@ export function CircleView() {
       if (circle.status === "Active") {
         setPaid(await ajo.paidThisRound(address, id));
         setDeadline(await ajo.roundDeadline(address, id));
+        // Balance is a nice-to-have; a failed read shouldn't block the page.
+        setBalance(await ajo.balance(address, address).catch(() => null));
       }
     } catch (e) {
       setMsg((e as Error).message);
@@ -103,6 +106,7 @@ export function CircleView() {
   const recipient = c.status === "Active" ? c.members[c.round] : null;
   const left = deadline ? Number(deadline) - now : 0;
   const active = c.status === "Active";
+  const lowFunds = !iPaid && balance !== null && balance < c.amount;
 
   const seats = c.status === "Open" ? c.max_members - c.members.length : 0;
   const rows = [
@@ -252,11 +256,24 @@ export function CircleView() {
           <div className="border-t border-line bg-paper-2/50 px-4 py-4 sm:px-8">
             <button
               className="btn btn-lg w-full"
-              disabled={busy || iPaid}
+              disabled={busy || iPaid || lowFunds}
               onClick={() => run(() => ajo.contribute(address, signer!, id), "Contribution recorded")}
             >
-              {busy ? "Confirming…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
+              {busy ? "Confirming…" : iPaid ? "Paid this round" : lowFunds ? `Not enough ${TOKEN_SYMBOL} to pay` : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
             </button>
+            {balance !== null && (
+              <p className={`mt-2 font-mono text-[11px] ${lowFunds ? "text-red-600" : "text-muted"}`}>
+                Your balance: {fromUnits(balance)} {TOKEN_SYMBOL}
+                {lowFunds && (
+                  <>
+                    {" "}· you need {fromUnits(c.amount - balance)} more.{" "}
+                    {kind === "wallet"
+                      ? "Top up with Friendbot (testnet) or add naira below."
+                      : `Send ${TOKEN_SYMBOL} to your wallet address to top up.`}
+                  </>
+                )}
+              </p>
+            )}
             {kind === "wallet" ? (
               <>
             <div className="mt-3 grid gap-2 min-[380px]:grid-cols-2">

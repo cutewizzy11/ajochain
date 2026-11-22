@@ -25,7 +25,9 @@ import {
   AJO_CONTRACT_ID,
   NETWORK_PASSPHRASE,
   RPC_URL,
+  TOKEN_CONTRACT_ID,
   TOKEN_DECIMALS,
+  TOKEN_SYMBOL,
 } from "./config";
 
 export const server = new rpc.Server(RPC_URL);
@@ -109,8 +111,13 @@ function buildTx(account: Account, op: xdr.Operation): Transaction {
     .build();
 }
 
-async function read<T>(viewer: string, method: string, args: xdr.ScVal[] = []): Promise<T> {
-  const tx = buildTx(await sourceAccount(viewer), new Contract(AJO_CONTRACT_ID).call(method, ...args));
+async function read<T>(
+  viewer: string,
+  method: string,
+  args: xdr.ScVal[] = [],
+  contractId = AJO_CONTRACT_ID,
+): Promise<T> {
+  const tx = buildTx(await sourceAccount(viewer), new Contract(contractId).call(method, ...args));
   const sim = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
   return scValToNative(sim.result!.retval) as T;
@@ -207,7 +214,10 @@ const ERRORS: Record<string, string> = {
   "#6": "Circle has not started yet — waiting for members",
   "#7": "You already paid this round",
   "#8": "Circle is completed",
-  "#9": "That agent is not authorised for this member",
+  // #9 is also the token's AllowanceError (insufficient approval for auto-pay).
+  "#9": "Not authorised: the agent isn't set, or the token allowance is too low",
+  // #10 comes from the token contract (SAC BalanceError).
+  "#10": `Not enough ${TOKEN_SYMBOL} in your wallet to pay this round`,
 };
 
 function friendlyError(raw: string) {
@@ -254,4 +264,8 @@ export const ajo = {
   payouts: (viewer: string, id: number) => read<Payout[]>(viewer, "payouts", [u32(id)]),
 
   reputation: (viewer: string, who: string) => read<Reputation>(viewer, "reputation", [addr(who)]),
+
+  /** Token balance of `who`, in base units. */
+  balance: (viewer: string, who: string) =>
+    read<bigint>(viewer, "balance", [addr(who)], TOKEN_CONTRACT_ID),
 };
