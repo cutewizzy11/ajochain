@@ -6,7 +6,7 @@ export const NETWORK_PASSPHRASE =
   process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ?? Networks.TESTNET;
 /** Deployed AjoChain contract id (C...). Set after `stellar contract deploy`. */
 export const AJO_CONTRACT_ID = process.env.NEXT_PUBLIC_AJO_CONTRACT_ID ?? "";
-/** Token used for contributions — testnet USDC SAC by default. */
+/** Token used for contributions — native XLM SAC on testnet by default (any SAC token, e.g. USDC, works). */
 export const TOKEN_CONTRACT_ID = process.env.NEXT_PUBLIC_TOKEN_CONTRACT_ID ?? "";
 export const TOKEN_DECIMALS = 7;
-export const TOKEN_SYMBOL = process.env.NEXT_PUBLIC_TOKEN_SYMBOL ?? "USDC";
+export const TOKEN_SYMBOL = process.env.NEXT_PUBLIC_TOKEN_SYMBOL ?? "XLM";

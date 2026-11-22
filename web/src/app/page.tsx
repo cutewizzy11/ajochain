@@ -10,7 +10,7 @@ const CIRCLES = ["Ajo", "Esusu", "Susu", "Adashi", "Tontine", "Chama", "Stokvel"
 const steps = [
   {
     title: "Start a circle",
-    body: "Pick the contribution (for example 20 USDC), the number of members and how often to pay: daily, weekly or monthly.",
+    body: "Pick the contribution (for example 20 XLM), the number of members and how often to pay: daily, weekly or monthly.",
   },
   {
     title: "Everyone contributes",
@@ -40,7 +40,7 @@ const cells: Cell[][] = NAMES.map((_, i) =>
 const facts = [
   { figure: "0.00001 XLM", label: "Base network fee per payment" },
   { figure: "~5s", label: "For a contribution to settle" },
-  { figure: "USDC", label: "Dollar savings, issued by Circle" },
+  { figure: "XLM", label: "Stellar's native asset, no bank account needed" },
   { figure: "₦ in · ₦ out", label: "Top up from and cash out to your bank via a licensed Stellar anchor (SEP-24). The pot never leaves the contract." },
   { figure: "Freighter · LOBSTR · xBull", label: "Wallets people already use" },
 ];
@@ -70,7 +70,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="fade-up mt-6 max-w-lg text-base sm:text-lg leading-relaxed text-ink-2" style={d(520)}>
-            You pay in 20 USDC on Friday. When everyone has paid, a contract on Stellar sends the pot to whoever&apos;s
+            You pay in 20 XLM on Friday. When everyone has paid, a contract on Stellar sends the pot to whoever&apos;s
             turn it is. There is no collector to trust, chase or lose.
           </p>
           <div className="fade-up mt-9 grid gap-3 min-[420px]:flex min-[420px]:flex-wrap" style={d(640)}>
@@ -95,7 +95,7 @@ export default function Home() {
             cells={cells}
           />
           <figcaption className="mt-4 border-t border-line pt-3 font-mono text-[11px] text-muted">
-            Round 3 of 6. Tunde&apos;s pot is 600 USDC; four of six have paid.
+            Round 3 of 6. Tunde&apos;s pot is 120 XLM; four of six have paid.
           </figcaption>
         </figure>
       </section>

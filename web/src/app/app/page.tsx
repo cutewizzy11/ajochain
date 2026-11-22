@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { ajo, Circle, fromUnits, Reputation, toUnits } from "@/lib/ajo";
 import { AJO_CONTRACT_ID, TOKEN_CONTRACT_ID, TOKEN_SYMBOL } from "@/lib/config";
 import { useWallet } from "@/lib/wallet";
@@ -18,7 +19,7 @@ const PERIODS = [
 ];
 
 export default function Dashboard() {
-  const { address, connect, signer } = useWallet();
+  const { address, kind, connect, signer } = useWallet();
   const router = useRouter();
   const [circles, setCircles] = useState<Circle[]>([]);
   const [rep, setRep] = useState<Reputation | null>(null);
@@ -108,6 +109,8 @@ export default function Dashboard() {
       </header>
 
       {msg && <Alert tone="error">{msg}</Alert>}
+
+      <WalletPanel address={address} kind={kind} rate={rate} />
 
       <section className="sheet fade-up grid gap-8 p-6 sm:grid-cols-[auto_1fr_auto] sm:items-end sm:p-8">
         <div>
@@ -330,5 +333,89 @@ function CircleRow({ c, me, rate }: { c: Circle; me: string; rate: number }) {
         <span className="nudge hidden text-muted sm:inline">→</span>
       </div>
     </Link>
+  );
+}
+
+/** Balance, full address, copy button and QR code, so members know where to top up. */
+function WalletPanel({ address, kind, rate }: { address: string; kind: string | null; rate: number }) {
+  const [bal, setBal] = useState<bigint | null>(null);
+  const [balErr, setBalErr] = useState(false);
+  const [qr, setQr] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      setBal(await ajo.balance(address, address));
+      setBalErr(false);
+    } catch {
+      setBalErr(true);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refresh();
+    QRCode.toString(address, { type: "svg", margin: 1 }).then(setQr).catch(() => setQr(""));
+  }, [address, refresh]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked; the address is still selectable */
+    }
+  }
+
+  const amount = bal === null ? null : fromUnits(bal);
+
+  return (
+    <section className="sheet fade-up grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+      <div className="min-w-0">
+        <p className="kicker mb-3">My wallet</p>
+        <p className="figure text-4xl">
+          {amount === null ? (balErr ? "—" : "…") : amount}{" "}
+          <span className="text-base text-muted">{TOKEN_SYMBOL}</span>
+        </p>
+        {amount !== null && rate > 0 && (
+          <p className="mt-1 text-sm text-muted">≈ {naira(Number(amount) * rate)}</p>
+        )}
+
+        <p className="label mt-6">Address</p>
+        <p className="mt-1 break-all font-mono text-sm">{address}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button className="btn btn-quiet" onClick={copy}>
+            {copied ? "Copied ✓" : "Copy address"}
+          </button>
+          <button className="btn btn-quiet" onClick={refresh}>
+            Refresh balance
+          </button>
+          {kind === "wallet" && (
+            <a
+              className="btn btn-quiet"
+              href={`https://friendbot.stellar.org/?addr=${address}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Get testnet XLM
+            </a>
+          )}
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted">
+          {kind === "passkey"
+            ? `Top up by sending testnet ${TOKEN_SYMBOL} to this address from any Stellar wallet (or scan the code).`
+            : `Fund this account with Friendbot, or send testnet ${TOKEN_SYMBOL} to it from another wallet.`}
+        </p>
+      </div>
+      {qr && (
+        <div
+          className="h-40 w-40 shrink-0 justify-self-center rounded border border-line bg-white p-2"
+          aria-label="QR code of your wallet address"
+          role="img"
+          dangerouslySetInnerHTML={{ __html: qr }}
+        />
+      )}
+    </section>
   );
 }

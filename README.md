@@ -6,7 +6,7 @@ Millions of people in Nigeria and Ghana save through rotating savings circles. E
 fixed amount every round, and one member takes the whole pot. The weak point is the collector, who
 holds everyone's money. AjoChain puts the pot in a Soroban smart contract instead:
 
-- Contributions are paid in **USDC** (a stable asset, safe from naira/cedi volatility) straight into the contract.
+- Contributions are paid in **XLM** on testnet, straight into the contract. Any Stellar asset contract (SAC) token works, so a mainnet deployment can use **USDC** to protect savers from naira/cedi volatility.
 - When every member has paid for the round, the contract **pays the pot out automatically** to that round's member.
 - Every on-time payment is recorded on-chain. This **reputation** goes with the member to future circles.
 - An optional **auto-pay agent** (for example an AI agent or a scheduled bot) can pay on a member's behalf. It can only spend what that member has approved for the contract, through a token allowance.
@@ -64,7 +64,7 @@ stellar contract deploy \
   --source alice --network testnet
 # -> prints the contract id (C...)
 
-# 3. Token: use testnet USDC, or for a demo, wrap native XLM:
+# 3. Token: the demo uses native XLM (any SAC token such as USDC also works):
 stellar contract id asset --asset native --network testnet
 ```
 
@@ -152,7 +152,7 @@ The agent scans every active circle and finds the members who authorised it. It 
 ## Demo script (2 minutes)
 
 1. Open three browser profiles, each with its own testnet wallet.
-2. Wallet A creates a circle: 10 USDC, 3 members, "Every 5 minutes (demo)".
+2. Wallet A creates a circle: 10 XLM, 3 members, "Every 5 minutes (demo)".
 3. Wallets B and C open the invite link and join. The circle becomes **Active**.
-4. All three contribute. On the last contribution the pot of 30 USDC lands in wallet A automatically.
+4. All three contribute. On the last contribution the pot of 30 XLM lands in wallet A automatically.
 5. The dashboard shows each member's reputation increasing.
