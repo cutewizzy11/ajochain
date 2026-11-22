@@ -18,7 +18,7 @@ const PERIODS = [
 ];
 
 export default function Dashboard() {
-  const { address, connect, sign } = useWallet();
+  const { address, connect, signer } = useWallet();
   const router = useRouter();
   const [circles, setCircles] = useState<Circle[]>([]);
   const [rep, setRep] = useState<Reputation | null>(null);
@@ -162,7 +162,7 @@ export default function Dashboard() {
           onSubmit={(e) => {
             e.preventDefault();
             run(async () => {
-              const id = await ajo.createCircle(address, sign, TOKEN_CONTRACT_ID, toUnits(tokenAmt.toFixed(7)), members, period);
+              const id = await ajo.createCircle(address, signer!, TOKEN_CONTRACT_ID, toUnits(tokenAmt.toFixed(7)), members, period);
               router.push(`/circle/${id}`);
             });
           }}
@@ -243,7 +243,7 @@ export default function Dashboard() {
             <span className="font-mono text-[11px] text-muted">{cadence}</span>
           </div>
           <button className="btn w-full" disabled={busy || !TOKEN_CONTRACT_ID}>
-            {busy ? "Waiting for wallet…" : "Create circle"}
+            {busy ? "Confirming…" : "Create circle"}
           </button>
         </form>
 
@@ -252,7 +252,7 @@ export default function Dashboard() {
           onSubmit={(e) => {
             e.preventDefault();
             run(async () => {
-              await ajo.join(address, sign, Number(joinId));
+              await ajo.join(address, signer!, Number(joinId));
               router.push(`/circle/${joinId}`);
             });
           }}

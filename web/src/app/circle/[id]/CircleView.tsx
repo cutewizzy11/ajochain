@@ -25,7 +25,7 @@ const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent 
 
 export function CircleView() {
   const id = Number(useParams<{ id: string }>().id);
-  const { address, connect, sign } = useWallet();
+  const { address, connect, sign, signer, kind } = useWallet();
   const { rate } = useNgnRate(TOKEN_SYMBOL);
   const [c, setC] = useState<Circle | null>(null);
   const [paid, setPaid] = useState<string[]>([]);
@@ -241,9 +241,9 @@ export function CircleView() {
               <button
                 className="btn btn-lg w-full"
                 disabled={busy}
-                onClick={() => run(() => ajo.join(address, sign, id), "Joined!")}
+                onClick={() => run(() => ajo.join(address, signer!, id), "Joined!")}
               >
-                {busy ? "Waiting for wallet…" : `Join · ${fromUnits(c.amount)} ${TOKEN_SYMBOL} per round`}
+                {busy ? "Confirming…" : `Join · ${fromUnits(c.amount)} ${TOKEN_SYMBOL} per round`}
               </button>
             )}
           </div>
@@ -253,10 +253,12 @@ export function CircleView() {
             <button
               className="btn btn-lg w-full"
               disabled={busy || iPaid}
-              onClick={() => run(() => ajo.contribute(address, sign, id), "Contribution recorded")}
+              onClick={() => run(() => ajo.contribute(address, signer!, id), "Contribution recorded")}
             >
-              {busy ? "Waiting for wallet…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
+              {busy ? "Confirming…" : iPaid ? "Paid this round" : `Pay ${fromUnits(c.amount)} ${TOKEN_SYMBOL} · ≈ ${naira(Number(fromUnits(c.amount)) * rate)}`}
             </button>
+            {kind === "wallet" ? (
+              <>
             <div className="mt-3 grid gap-2 min-[380px]:grid-cols-2">
               <button
                 className="btn-quiet"
@@ -277,6 +279,12 @@ export function CircleView() {
               Naira in/out via a licensed Stellar anchor ({ANCHOR_DOMAIN}, {ANCHOR_ASSET}, SEP-24). The anchor only
               converts at the edges; it never touches the pot, which only this contract can release.
             </p>
+              </>
+            ) : (
+              <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted">
+                Naira on/off-ramp needs a Stellar wallet (Freighter, xBull…). Passkey wallets pay no network fees.
+              </p>
+            )}
           </div>
         )}
       </section>
@@ -319,7 +327,7 @@ export function CircleView() {
                   className="btn-quiet w-full"
                   disabled={busy || rounds < 1}
                   onClick={async () => {
-                    if (await run(() => ajo.approve(address, sign, c.token, c.amount * BigInt(rounds)), "Allowance set"))
+                    if (await run(() => ajo.approve(address, signer!, c.token, c.amount * BigInt(rounds)), "Allowance set"))
                       setApproved(true);
                   }}
                 >
@@ -337,7 +345,7 @@ export function CircleView() {
                 <button
                   className="btn w-full"
                   disabled={busy || !agent}
-                  onClick={() => run(() => ajo.setAgent(address, sign, id, agent), "Agent authorised")}
+                  onClick={() => run(() => ajo.setAgent(address, signer!, id, agent), "Agent authorised")}
                 >
                   Authorise agent
                 </button>

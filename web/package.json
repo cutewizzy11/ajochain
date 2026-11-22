@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "smoke": "node --env-file=.env.local scripts/passkey-smoke.cjs"
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^2.8.0",

@@ -13,7 +13,7 @@ holds everyone's money. AjoChain puts the pot in a Soroban smart contract instea
 
 ## Live on testnet
 
-**Try it:** https://ajochain-rho.vercel.app (connect a testnet wallet such as Freighter)
+**Try it:** https://ajochain-rho.vercel.app (sign in with a passkey, meaning Face ID, fingerprint or phone PIN, with no seed phrase and no fees; or connect a testnet wallet such as Freighter)
 
 | | |
 |---|---|
@@ -25,9 +25,10 @@ End-to-end test on testnet: a 3-member circle (10 XLM each) was created, joined 
 ## Repo layout
 
 ```
-contracts/ajo/   Soroban smart contract (Rust) + unit tests
-web/             Next.js 16 frontend (Stellar Wallets Kit, stellar-sdk)
-agent/           Auto-pay agent (Node) that pays contributions for members who opt in
+contracts/ajo/             Soroban smart contract (Rust) + unit tests
+contracts/passkey-wallet/  Passkey (secp256r1 / WebAuthn) smart-wallet contract + unit tests
+web/                       Next.js 16 frontend (passkeys + Stellar Wallets Kit, stellar-sdk)
+agent/                     Auto-pay agent (Node) that pays contributions for members who opt in
 ```
 
 ## Contract API
@@ -72,12 +73,65 @@ Then set up the frontend:
 ```bash
 cd web
 cp .env.example .env.local   # fill in NEXT_PUBLIC_AJO_CONTRACT_ID and NEXT_PUBLIC_TOKEN_CONTRACT_ID
+                             # for passkeys also: NEXT_PUBLIC_PASSKEY_WASM_HASH, NEXT_PUBLIC_RELAYER_ADDRESS,
+                             # and RELAYER_SECRET (server-only, never NEXT_PUBLIC, never commit it)
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000 and connect Freighter, xBull, LOBSTR or another wallet set to **testnet**.
-The account must be funded (use Friendbot) and must hold the contribution token.
+Open http://localhost:3000. Either create a passkey wallet (see below) or connect Freighter, xBull,
+LOBSTR or another wallet set to **testnet**. A classic wallet account must be funded (use Friendbot)
+and must hold the contribution token.
+
+## Passkey wallets (no seed phrase, gasless)
+
+New users sign in with Face ID, a fingerprint or a phone PIN. Behind the scenes:
+
+1. The browser creates a P-256 passkey (WebAuthn).
+2. `POST /api/wallet` deploys a `passkey-wallet` contract for that public key and funds it. The
+   address is deterministic: the relayer as deployer, with salt `sha256(credentialId)`. The same
+   passkey therefore always maps to the same wallet, on any device the passkey syncs to.
+3. For each action, the app simulates the call and has the passkey sign only the Soroban auth
+   entries belonging to the user's wallet. The wallet's `__check_auth` verifies the WebAuthn
+   assertion on-chain with `secp256r1`.
+4. `POST /api/relay` submits the transaction with the relayer as the source, so the relayer pays the
+   fees. It refuses any transaction that would need the relayer's own authorisation.
+
+Setup:
+
+```bash
+cd contracts/passkey-wallet && cargo test
+stellar contract build
+stellar contract upload --wasm target/wasm32v1-none/release/passkey_wallet.wasm \
+  --source alice --network testnet          # -> NEXT_PUBLIC_PASSKEY_WASM_HASH
+stellar keys generate relayer --network testnet --fund
+stellar keys address relayer                 # -> NEXT_PUBLIC_RELAYER_ADDRESS
+stellar keys show relayer                    # -> RELAYER_SECRET (server env only)
+```
+
+Keep the relayer funded, because it pays every passkey user's fees and wallet deposit.
+
+Note: testnet now returns CAP-71 `sorobanCredentialsAddressV2` auth entries. The client and relayer
+handle both V1 and V2.
+
+### End-to-end smoke test
+
+The smoke test runs the whole passkey flow against testnet through a running server. It uses a Node
+P-256 key in place of the authenticator, which produces the same assertion format:
+
+1. Create two wallets.
+2. Create a circle.
+3. Join it.
+4. Both wallets contribute, so the circle pays out.
+5. Negative check: a forged signature must be rejected.
+
+```bash
+cd web
+npm run dev                       # in another terminal
+BASE=http://localhost:3000 npm run smoke   # ~40s, ends with "ALL OK"; DEBUG=1 for host events
+```
+
+Run it before every deploy.
 
 ## Auto-pay agent
 
