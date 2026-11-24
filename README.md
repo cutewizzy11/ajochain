@@ -156,7 +156,7 @@ The agent scans every active circle and finds the members who authorised it. It 
 
 ## Testing on the live site
 
-Each new passkey wallet gets a small amount of testnet XLM for free (`STARTER_FUNDS_XLM`, which is 5 by default). That amount is your limit. The per-round contribution of any circle you create or join must be no more than your balance, because you pay round 1 as soon as the circle fills. The app shows your balance under the amount field and under the Join button, and it blocks amounts you can't cover. To test bigger amounts, send more testnet XLM to the wallet address shown on the dashboard.
+Each new passkey wallet gets 50 testnet XLM for free (set by `STARTER_FUNDS_XLM`; the live site uses 50, and the code falls back to 5 if it is unset). That amount is your limit. The per-round contribution of any circle you create or join must be no more than your balance, because you pay round 1 as soon as the circle fills. The app shows your balance under the amount field and under the Join button, and it blocks amounts you can't cover. To test bigger amounts, send more testnet XLM to the wallet address shown on the dashboard.
 
 ## Demo script (2 minutes)
 
