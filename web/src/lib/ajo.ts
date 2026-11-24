@@ -32,7 +32,7 @@ import {
 
 export const server = new rpc.Server(RPC_URL);
 
-export type Status = "Open" | "Active" | "Completed";
+export type Status = "Open" | "Active" | "Completed" | "Defaulted";
 
 export interface Circle {
   id: number;
@@ -58,6 +58,7 @@ export interface Reputation {
   on_time: number;
   late: number;
   circles_completed: number;
+  defaulted: number;
 }
 
 export type SignFn = (xdr: string) => Promise<string>;
@@ -216,8 +217,11 @@ const ERRORS: Record<string, string> = {
   "#8": "Circle is completed",
   // #9 is also the token's AllowanceError (insufficient approval for auto-pay).
   "#9": "Not authorised: the agent isn't set, or the token allowance is too low",
-  // #10 comes from the token contract (SAC BalanceError).
+  // #10 comes from the token contract (SAC BalanceError). Note: the Ajo
+  // contract also defines #10 (DeadlineNotReached), but the Resolve action is
+  // only offered once the deadline has passed, so that case isn't surfaced here.
   "#10": `Not enough ${TOKEN_SYMBOL} in your wallet to pay this round`,
+  "#11": "Everyone has paid — there is nothing to resolve",
 };
 
 function friendlyError(raw: string) {
@@ -236,6 +240,13 @@ export const ajo = {
 
   contribute: (me: string, signer: Signer, id: number) =>
     write(me, signer, "contribute", [u32(id), addr(me)]),
+
+  /**
+   * Unwind a stuck round after its deadline: refunds everyone who paid the
+   * current round and closes the circle. Permissionless — any member can call.
+   */
+  resolveRound: (me: string, signer: Signer, id: number) =>
+    write(me, signer, "resolve_round", [u32(id)]),
 
   setAgent: (me: string, signer: Signer, id: number, agent: string) =>
     write(me, signer, "set_agent", [u32(id), addr(me), addr(agent)]),

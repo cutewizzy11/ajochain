@@ -21,7 +21,7 @@ import {
 } from "@/components/ui";
 import { CountUp, Loader } from "@/components/motion";
 
-const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent authorised", "Anchor opened — finish in the popup"]);
+const OK = new Set(["Joined!", "Contribution recorded", "Allowance set", "Agent authorised", "Anchor opened — finish in the popup", "Circle resolved — contributions refunded"]);
 
 export function CircleView() {
   const id = Number(useParams<{ id: string }>().id);
@@ -107,6 +107,9 @@ export function CircleView() {
   const left = deadline ? Number(deadline) - now : 0;
   const active = c.status === "Active";
   const lowFunds = !iPaid && balance !== null && balance < c.amount;
+  // A round whose deadline has passed without everyone paying is stuck: the pot
+  // can't be released, so it can only be resolved (refund + close).
+  const stuck = active && !!deadline && left <= 0 && paid.length < c.max_members;
 
   const seats = c.status === "Open" ? c.max_members - c.members.length : 0;
   const rows = [
@@ -215,6 +218,12 @@ export function CircleView() {
                   {c.members.length}/{c.max_members} joined
                 </p>
               </div>
+            ) : c.status === "Defaulted" ? (
+              <div className="flex h-full items-center">
+                <p className="font-display text-xl leading-snug">
+                  Circle closed early — a round went unpaid, so every contribution to it was refunded.
+                </p>
+              </div>
             ) : (
               <div className="flex h-full items-center">
                 <p className="font-display text-xl leading-snug">
@@ -304,6 +313,23 @@ export function CircleView() {
             )}
           </div>
         )}
+        {stuck && isMember && (
+          <div className="border-t border-line bg-paper-2/50 px-4 py-4 sm:px-8">
+            <p className="font-mono text-[11px] leading-relaxed text-stamp">
+              The deadline passed with {c.max_members - paid.length} member
+              {c.max_members - paid.length === 1 ? "" : "s"} unpaid, so the pot can&apos;t be released.
+              Resolving refunds everyone who paid this round in full and closes the circle — no one&apos;s
+              contribution stays locked.
+            </p>
+            <button
+              className="btn btn-lg mt-3 w-full"
+              disabled={busy}
+              onClick={() => run(() => ajo.resolveRound(address, signer!, id), "Circle resolved — contributions refunded")}
+            >
+              {busy ? "Confirming…" : "Resolve & refund this round"}
+            </button>
+          </div>
+        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -315,7 +341,7 @@ export function CircleView() {
           <Passbook rows={rows} rounds={c.max_members} current={active ? c.round : null} cells={cells} end={notes} />
         </section>
 
-        {isMember && c.status !== "Completed" ? (
+        {isMember && c.status !== "Completed" && c.status !== "Defaulted" ? (
           <section className="sheet min-w-0 self-start p-5 sm:p-6">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-display text-xl">Auto-pay agent</h2>

@@ -57,6 +57,7 @@ const STATUS: Record<Circle["status"], { label: string; cls: string }> = {
   Open: { label: "Enrolling", cls: "text-ochre border-ochre" },
   Active: { label: "Running", cls: "text-indigo border-indigo" },
   Completed: { label: "Settled", cls: "text-stamp border-stamp" },
+  Defaulted: { label: "Refunded", cls: "text-red-600 border-red-600" },
 };
 
 export function StatusBadge({ status }: { status: Circle["status"] }) {
