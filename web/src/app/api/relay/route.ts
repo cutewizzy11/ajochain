@@ -10,15 +10,27 @@
 import { Address, TransactionBuilder } from "@stellar/stellar-sdk";
 import { AJO_CONTRACT_ID, NETWORK_PASSPHRASE, TOKEN_CONTRACT_ID } from "@/lib/config";
 import { feeParts, firstOp, relayer, submitAsRelayer } from "@/lib/relayer.server";
+import { clientIp, consumeBudget, rateLimit } from "@/lib/ratelimit";
 
 const ALLOWED_CONTRACTS = new Set([AJO_CONTRACT_ID, TOKEN_CONTRACT_ID]);
-const MAX_FEE = 10n * 10_000_000n; // 10 XLM
+const MAX_FEE = 10n * 10_000_000n; // 10 XLM, per transaction
+
+const RL_MAX = Number(process.env.RELAY_RL_MAX ?? "20"); // relayed txs per IP per minute
+const RL_WINDOW_MS = 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Rolling daily caps on sponsored fees (stroops), per IP and globally.
+const DAILY_FEE_CAP_IP = Math.round(Number(process.env.RELAY_FEE_CAP_IP_XLM ?? "50") * 1e7);
+const DAILY_FEE_CAP_GLOBAL = Math.round(Number(process.env.RELAY_FEE_CAP_XLM ?? "1000") * 1e7);
 
 function bad(error: string, status = 400) {
   return Response.json({ error }, { status });
 }
 
 export async function POST(request: Request) {
+  const ip = clientIp(request);
+  const rl = await rateLimit(`relay:${ip}`, RL_MAX, RL_WINDOW_MS);
+  if (!rl.ok) return bad("Too many requests", 429);
+
   let tx;
   try {
     const body = await request.json();
@@ -54,6 +66,16 @@ export async function POST(request: Request) {
   const { fee, sorobanData } = feeParts(tx);
   const total = BigInt(fee) + (sorobanData ? BigInt(sorobanData.resourceFee) : 0n);
   if (total > MAX_FEE) return bad("Fee too high");
+
+  // Charge the sponsored fee against rolling daily budgets before paying it, so
+  // the relayer balance can't be drained by a flood of otherwise-valid calls.
+  const spend = Number(total);
+  if (!(await consumeBudget("relay:fee:global", spend, DAILY_FEE_CAP_GLOBAL, DAY_MS))) {
+    return bad("Sponsored-fee budget exhausted, try again later", 503);
+  }
+  if (!(await consumeBudget(`relay:fee:${ip}`, spend, DAILY_FEE_CAP_IP, DAY_MS))) {
+    return bad("Daily sponsored-fee limit reached", 429);
+  }
 
   try {
     const res = await submitAsRelayer(op, fee, sorobanData);

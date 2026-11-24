@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+// Static headers. The Content-Security-Policy is intentionally NOT set here —
+// it is applied per-request (with a fresh nonce) in src/middleware.ts.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -7,11 +9,6 @@ const securityHeaders = [
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), usb=(), payment=()",
-  },
-  {
-    key: "Content-Security-Policy",
-    value:
-      "frame-ancestors 'none'; base-uri 'none'; object-src 'none'; upgrade-insecure-requests",
   },
 ];
 
