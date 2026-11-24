@@ -681,6 +681,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "defaulted"
+                    },
+                    "val": {
+                      "u32": 0
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "late"
                     },
                     "val": {

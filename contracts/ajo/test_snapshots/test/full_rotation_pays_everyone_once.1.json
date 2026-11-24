@@ -1598,6 +1598,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "defaulted"
+                    },
+                    "val": {
+                      "u32": 0
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "late"
                     },
                     "val": {
@@ -1650,6 +1658,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "defaulted"
+                    },
+                    "val": {
+                      "u32": 0
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "late"
                     },
                     "val": {
@@ -1698,6 +1714,14 @@
                     },
                     "val": {
                       "u32": 1
+                    }
+                  },
+                  {
+                    "key": {
+                      "symbol": "defaulted"
+                    },
+                    "val": {
+                      "u32": 0
                     }
                   },
                   {

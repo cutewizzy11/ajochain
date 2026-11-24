@@ -809,6 +809,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "defaulted"
+                    },
+                    "val": {
+                      "u32": 0
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "late"
                     },
                     "val": {
@@ -854,6 +862,14 @@
                   {
                     "key": {
                       "symbol": "circles_completed"
+                    },
+                    "val": {
+                      "u32": 0
+                    }
+                  },
+                  {
+                    "key": {
+                      "symbol": "defaulted"
                     },
                     "val": {
                       "u32": 0
