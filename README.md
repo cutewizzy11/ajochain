@@ -17,7 +17,7 @@ holds everyone's money. AjoChain puts the pot in a Soroban smart contract instea
 
 | | |
 |---|---|
-| AjoChain contract | [`CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB`](https://stellar.expert/explorer/testnet/contract/CAPOPZZ4Q56WSJPBFTAS7HUP4WU7PSISVZEWABVMG7V45TUC6CFS7GVB) |
+| AjoChain contract | [`CA73U7MRNPKZUKBXDU4YTPEMRV2OQ4BKP6F7HGSNZTAY2PKT5SLOI7QW`](https://stellar.expert/explorer/testnet/contract/CA73U7MRNPKZUKBXDU4YTPEMRV2OQ4BKP6F7HGSNZTAY2PKT5SLOI7QW) |
 | Token (native XLM, SAC) | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 
 End-to-end test on testnet: a 3-member circle (10 XLM each) was created, joined and paid. One member's share was paid by the auto-pay agent through `contribute_for`. The contract then paid the 30 XLM pot out automatically and recorded on-time reputation for every member.
@@ -63,6 +63,11 @@ stellar contract deploy \
   --wasm target/wasm32v1-none/release/ajo.wasm \
   --source alice --network testnet
 # -> prints the contract id (C...)
+
+# 2b. Pre-pay ~120 days of rent for the new instance + wasm. Otherwise the first
+#     relayed call pays it (~25 XLM) and is rejected by the relay's 10 XLM fee cap.
+stellar contract extend --id <C...> --ledgers-to-extend 2073600 --durability persistent --source alice --network testnet
+stellar contract extend --wasm target/wasm32v1-none/release/ajo.wasm --ledgers-to-extend 2073600 --durability persistent --source alice --network testnet
 
 # 3. Token: the demo uses native XLM (any SAC token such as USDC also works):
 stellar contract id asset --asset native --network testnet

@@ -34,6 +34,9 @@ function assert(pk, payload) {
   return xdr.ScVal.scvMap([e("authenticator_data", authData), e("client_data_json", cdj), e("signature", sig)]);
 }
 
+// Unique client IP per run so local rate limits don't trip on reruns (Vercel overwrites this header in production).
+const H = { "content-type": "application/json", "x-forwarded-for": `10.${Math.random() * 255 | 0}.${Math.random() * 255 | 0}.${Math.random() * 255 | 0}` };
+
 const build = (op) =>
   new TransactionBuilder(new Account(RELAYER, "0"), { fee: "100", networkPassphrase: PASS }).addOperation(op).setTimeout(30).build();
 
@@ -55,7 +58,8 @@ async function write(pk, me, method, args) {
     throw new Error("resim: " + second.error);
   }
   const prepared = rpc.assembleTransaction(draft, second).build();
-  const r = await fetch(BASE + "/api/relay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ xdr: prepared.toXDR() }) });
+  if (process.env.DEBUG) console.log(method, "fee", prepared.fee, "minResourceFee", second.minResourceFee);
+  const r = await fetch(BASE + "/api/relay", { method: "POST", headers: H, body: JSON.stringify({ xdr: prepared.toXDR() }) });
   const body = await r.json();
   if (!r.ok) throw new Error(`relay ${r.status}: ${body.error}`);
   return body.returnValue ? scValToNative(xdr.ScVal.fromXDR(body.returnValue, "base64")) : undefined;
@@ -63,7 +67,7 @@ async function write(pk, me, method, args) {
 
 async function newWallet() {
   const pk = fakePasskey();
-  const r = await fetch(BASE + "/api/wallet", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ credentialId: pk.credentialId, publicKey: b64u(pk.pub) }) });
+  const r = await fetch(BASE + "/api/wallet", { method: "POST", headers: H, body: JSON.stringify({ credentialId: pk.credentialId, publicKey: b64u(pk.pub) }) });
   const body = await r.json();
   if (!r.ok) throw new Error(`wallet ${r.status}: ${body.error}`);
   return { pk, addr: body.address };
