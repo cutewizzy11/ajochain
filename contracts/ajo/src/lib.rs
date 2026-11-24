@@ -29,6 +29,10 @@ pub enum Error {
     AlreadyPaid = 7,
     Completed = 8,
     NotAgent = 9,
+    /// `resolve_round` called before the current round's deadline.
+    DeadlineNotReached = 10,
+    /// `resolve_round` called on a round where everyone has already paid.
+    NotStuck = 11,
 }
 
 #[contracttype]
@@ -37,6 +41,9 @@ pub enum Status {
     Open,
     Active,
     Completed,
+    /// A round passed its deadline unpaid; the round was refunded and the
+    /// circle was closed via `resolve_round`.
+    Defaulted,
 }
 
 #[contracttype]
@@ -73,6 +80,8 @@ pub struct Reputation {
     pub on_time: u32,
     pub late: u32,
     pub circles_completed: u32,
+    /// Rounds this address failed to pay before a circle defaulted.
+    pub defaulted: u32,
 }
 
 #[contracttype]
@@ -93,6 +102,10 @@ const DAY_LEDGERS: u32 = 17_280;
 const TTL_THRESHOLD: u32 = 30 * DAY_LEDGERS;
 const TTL_EXTEND: u32 = 120 * DAY_LEDGERS;
 
+/// Upper bound on a circle's per-round contribution (1e9 tokens at 7 decimals).
+/// Guards against an oversized `amount` making `amount * members` trap.
+const MAX_AMOUNT: i128 = 1_000_000_000 * 10_000_000;
+
 #[contract]
 pub struct AjoContract;
 
@@ -111,7 +124,7 @@ impl AjoContract {
         period: u64,
     ) -> u32 {
         creator.require_auth();
-        if amount <= 0 || max_members < 2 || max_members > 50 || period == 0 {
+        if amount <= 0 || amount > MAX_AMOUNT || max_members < 2 || max_members > 50 || period == 0 {
             panic_with_error!(&env, Error::InvalidParams);
         }
         let id: u32 = env.storage().instance().get(&DataKey::NextId).unwrap_or(0);
@@ -215,6 +228,67 @@ impl AjoContract {
         record_payment(&env, c, member);
     }
 
+    /// Unwind a stuck round after its deadline: refund every member who paid
+    /// the current round and close the circle as `Defaulted`. This is the
+    /// escape hatch that prevents one non-paying member from permanently
+    /// locking everyone else's contributions.
+    ///
+    /// Permissionless by design — money only ever flows back to the members
+    /// who paid in (never to the caller), so anyone (a member or a keeper) can
+    /// trigger it once the deadline has passed. Earlier rounds already paid
+    /// out in full, so after this the contract holds nothing for the circle.
+    pub fn resolve_round(env: Env, circle_id: u32) {
+        let mut c = load_circle(&env, circle_id);
+        if c.status != Status::Active {
+            panic_with_error!(&env, Error::NotStarted);
+        }
+        let deadline = c.start_time + (c.round as u64 + 1) * c.period;
+        if env.ledger().timestamp() <= deadline {
+            panic_with_error!(&env, Error::DeadlineNotReached);
+        }
+        let round = c.round;
+        let all_paid = c
+            .members
+            .iter()
+            .all(|m| env.storage().persistent().has(&DataKey::Paid(c.id, round, m)));
+        if all_paid {
+            // Not stuck — the normal contribute() path pays this out.
+            panic_with_error!(&env, Error::NotStuck);
+        }
+
+        // ---- EFFECTS first (so a malicious token cannot re-enter): close the
+        // circle, clear the round's paid flags, and record defaults. ----
+        c.status = Status::Defaulted;
+        save_circle(&env, &c);
+
+        let mut refund_to = Vec::new(&env);
+        for m in c.members.iter() {
+            let pk = DataKey::Paid(c.id, round, m.clone());
+            if env.storage().persistent().has(&pk) {
+                env.storage().persistent().remove(&pk);
+                refund_to.push_back(m.clone());
+            } else {
+                let rk = DataKey::Reputation(m.clone());
+                let mut r = AjoContract::reputation(env.clone(), m.clone());
+                r.defaulted += 1;
+                env.storage().persistent().set(&rk, &r);
+                bump(&env, &rk);
+            }
+        }
+
+        // ---- INTERACTIONS last: refund the contributions of this round. ----
+        let client = token::Client::new(&env, &c.token);
+        let me = env.current_contract_address();
+        for m in refund_to.iter() {
+            client.transfer(&me, &m, &c.amount);
+        }
+
+        env.events().publish(
+            (soroban_sdk::Symbol::new(&env, "defaulted"), c.id, round),
+            env.ledger().timestamp(),
+        );
+    }
+
     // ----- reads --------------------------------------------------------
 
     pub fn get_circle(env: Env, circle_id: u32) -> Circle {
@@ -270,6 +344,7 @@ impl AjoContract {
                 on_time: 0,
                 late: 0,
                 circles_completed: 0,
+                defaulted: 0,
             })
     }
 
@@ -321,7 +396,7 @@ fn add_member_circle(env: &Env, who: &Address, id: u32) {
 fn check_can_pay(env: &Env, c: &Circle, member: &Address) {
     match c.status {
         Status::Open => panic_with_error!(env, Error::NotStarted),
-        Status::Completed => panic_with_error!(env, Error::Completed),
+        Status::Completed | Status::Defaulted => panic_with_error!(env, Error::Completed),
         Status::Active => {}
     }
     if !c.members.contains(member) {
@@ -369,8 +444,10 @@ fn record_payment(env: &Env, mut c: Circle, member: Address) {
 
     let recipient = c.members.get(c.round).unwrap();
     let pot = c.amount * c.members.len() as i128;
-    token::Client::new(env, &c.token).transfer(&env.current_contract_address(), &recipient, &pot);
+    let paid_round = c.round;
 
+    // ---- EFFECTS: record the payout and advance state BEFORE transferring,
+    // so a malicious token cannot re-enter and trigger a second payout. ----
     let pkey = DataKey::Payouts(c.id);
     let mut history: Vec<Payout> = env
         .storage()
@@ -378,20 +455,17 @@ fn record_payment(env: &Env, mut c: Circle, member: Address) {
         .get(&pkey)
         .unwrap_or(Vec::new(env));
     history.push_back(Payout {
-        round: c.round,
+        round: paid_round,
         recipient: recipient.clone(),
         amount: pot,
         timestamp: now,
     });
     env.storage().persistent().set(&pkey, &history);
     bump(env, &pkey);
-    env.events().publish(
-        (soroban_sdk::Symbol::new(env, "payout"), c.id, c.round),
-        (recipient, pot),
-    );
 
     c.round += 1;
-    if c.round == c.members.len() {
+    let completed = c.round == c.members.len();
+    if completed {
         c.status = Status::Completed;
         for m in c.members.iter() {
             let k = DataKey::Reputation(m.clone());
@@ -400,10 +474,20 @@ fn record_payment(env: &Env, mut c: Circle, member: Address) {
             env.storage().persistent().set(&k, &r);
             bump(env, &k);
         }
+    }
+    save_circle(env, &c);
+
+    // ---- INTERACTION last ----
+    token::Client::new(env, &c.token).transfer(&env.current_contract_address(), &recipient, &pot);
+
+    env.events().publish(
+        (soroban_sdk::Symbol::new(env, "payout"), c.id, paid_round),
+        (recipient, pot),
+    );
+    if completed {
         env.events()
             .publish((soroban_sdk::Symbol::new(env, "completed"), c.id), now);
     }
-    save_circle(env, &c);
 }
 
 #[cfg(test)]
