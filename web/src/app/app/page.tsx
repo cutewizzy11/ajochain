@@ -27,12 +27,28 @@ export default function Dashboard() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const [amount, setAmount] = useState("10");
+  const [amount, setAmount] = useState("2");
   const [members, setMembers] = useState(5);
   const [period, setPeriod] = useState(PERIODS[2].secs);
   const [joinId, setJoinId] = useState("");
   const [inNgn, setInNgn] = useState(false);
   const { rate, live } = useNgnRate(TOKEN_SYMBOL);
+  const [bal, setBal] = useState<bigint | null>(null);
+  const [balErr, setBalErr] = useState(false);
+  const refreshBal = useCallback(async () => {
+    if (!address) return;
+    try {
+      setBal(await ajo.balance(address, address));
+      setBalErr(false);
+    } catch {
+      setBalErr(true);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshBal();
+  }, [refreshBal]);
 
   const load = useCallback(async () => {
     if (!address || !AJO_CONTRACT_ID) return;
@@ -94,6 +110,8 @@ export default function Dashboard() {
   const tokenAmt = Number.isFinite(amt) && amt > 0 ? (inNgn ? amt / rate : amt) : 0;
   const potPreview = tokenAmt * members;
   const cadence = PERIODS.find((p) => p.secs === period)?.short ?? "";
+  const balTok = bal === null ? null : Number(fromUnits(bal));
+  const overBal = balTok !== null && tokenAmt > balTok;
 
   return (
     <div className="space-y-14">
@@ -110,7 +128,7 @@ export default function Dashboard() {
 
       {msg && <Alert tone="error">{msg}</Alert>}
 
-      <WalletPanel address={address} kind={kind} rate={rate} />
+      <WalletPanel address={address} kind={kind} rate={rate} bal={bal} balErr={balErr} refresh={refreshBal} />
 
       <section className="sheet fade-up grid gap-8 p-6 sm:grid-cols-[auto_1fr_auto] sm:items-end sm:p-8">
         <div>
@@ -203,6 +221,13 @@ export default function Dashboard() {
                 {naira(rate)}
                 {live ? "" : " (est.)"}
               </p>
+              {balTok !== null && (
+                <p className={`mt-1 font-mono text-[10px] ${overBal ? "text-red-600" : "text-muted"}`}>
+                  {overBal
+                    ? `More than your balance (${fromUnits(bal!)} ${TOKEN_SYMBOL}). You pay round 1 as soon as the circle fills, so keep it at or below your balance, or top up first.`
+                    : `Your balance: ${fromUnits(bal!)} ${TOKEN_SYMBOL}. Keep each round at or below this.`}
+                </p>
+              )}
             </div>
             <div>
               <label className="label">Members (2–50)</label>
@@ -245,8 +270,8 @@ export default function Dashboard() {
             <span className="font-mono text-[11px] text-muted">≈ {naira(potPreview * rate)}</span>
             <span className="font-mono text-[11px] text-muted">{cadence}</span>
           </div>
-          <button className="btn w-full" disabled={busy || !TOKEN_CONTRACT_ID}>
-            {busy ? "Confirming…" : "Create circle"}
+          <button className="btn w-full" disabled={busy || !TOKEN_CONTRACT_ID || overBal}>
+            {busy ? "Confirming…" : overBal ? `Not enough ${TOKEN_SYMBOL} for this amount` : "Create circle"}
           </button>
         </form>
 
@@ -337,26 +362,27 @@ function CircleRow({ c, me, rate }: { c: Circle; me: string; rate: number }) {
 }
 
 /** Balance, full address, copy button and QR code, so members know where to top up. */
-function WalletPanel({ address, kind, rate }: { address: string; kind: string | null; rate: number }) {
-  const [bal, setBal] = useState<bigint | null>(null);
-  const [balErr, setBalErr] = useState(false);
+function WalletPanel({
+  address,
+  kind,
+  rate,
+  bal,
+  balErr,
+  refresh,
+}: {
+  address: string;
+  kind: string | null;
+  rate: number;
+  bal: bigint | null;
+  balErr: boolean;
+  refresh: () => void;
+}) {
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const refresh = useCallback(async () => {
-    try {
-      setBal(await ajo.balance(address, address));
-      setBalErr(false);
-    } catch {
-      setBalErr(true);
-    }
-  }, [address]);
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh();
     QRCode.toString(address, { type: "svg", margin: 1 }).then(setQr).catch(() => setQr(""));
-  }, [address, refresh]);
+  }, [address]);
 
   async function copy() {
     try {
@@ -404,7 +430,7 @@ function WalletPanel({ address, kind, rate }: { address: string; kind: string | 
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted">
           {kind === "passkey"
-            ? `Top up by sending testnet ${TOKEN_SYMBOL} to this address from any Stellar wallet (or scan the code).`
+            ? `This is your testnet spending limit: each circle's per-round amount must fit in it. Top up by sending testnet ${TOKEN_SYMBOL} to this address from any Stellar wallet (or scan the code).`
             : `Fund this account with Friendbot, or send testnet ${TOKEN_SYMBOL} to it from another wallet.`}
         </p>
       </div>

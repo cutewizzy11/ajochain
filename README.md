@@ -154,6 +154,10 @@ npm start              # or `npm run once` for a single pass
 
 The agent scans every active circle and finds the members who authorised it. It calls `contribute_for` once `PAY_AFTER` of the round has passed. It never holds member funds. A member can revoke it at any time with `remove_agent`, or by setting their allowance to 0.
 
+## Testing on the live site
+
+Each new passkey wallet gets a small amount of testnet XLM for free (`STARTER_FUNDS_XLM`, which is 5 by default). That amount is your limit. The per-round contribution of any circle you create or join must be no more than your balance, because you pay round 1 as soon as the circle fills. The app shows your balance under the amount field and under the Join button, and it blocks amounts you can't cover. To test bigger amounts, send more testnet XLM to the wallet address shown on the dashboard.
+
 ## Demo script (2 minutes)
 
 1. Open three browser profiles, each with its own testnet wallet.

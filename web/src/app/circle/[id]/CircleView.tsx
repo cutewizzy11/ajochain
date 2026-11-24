@@ -259,6 +259,13 @@ export function CircleView() {
                 {busy ? "Confirming…" : `Join · ${fromUnits(c.amount)} ${TOKEN_SYMBOL} per round`}
               </button>
             )}
+            {!isMember && balance !== null && (
+              <p className={`mt-2 font-mono text-[11px] ${balance < c.amount ? "text-red-600" : "text-muted"}`}>
+                Your balance: {fromUnits(balance)} {TOKEN_SYMBOL}
+                {balance < c.amount &&
+                  ` · not enough for one round (${fromUnits(c.amount)} ${TOKEN_SYMBOL}). Top up before joining, or you won't be able to pay.`}
+              </p>
+            )}
           </div>
         )}
         {active && isMember && (
