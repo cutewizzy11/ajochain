@@ -160,8 +160,12 @@ Each new passkey wallet gets 50 testnet XLM for free (set by `STARTER_FUNDS_XLM`
 
 ## Demo script (2 minutes)
 
-1. Open three browser profiles, each with its own testnet wallet.
-2. Wallet A creates a circle: 10 XLM, 3 members, "Every 5 minutes (demo)".
-3. Wallets B and C open the invite link and join. The circle becomes **Active**.
-4. All three contribute. On the last contribution the pot of 30 XLM lands in wallet A automatically.
-5. The dashboard shows each member's reputation increasing.
+Three people (Ada, Bola and Chidi), each on their own phone or browser profile, so each has their own passkey wallet:
+
+1. Ada opens the live site and signs up with a passkey. A smart-contract wallet is deployed for her and topped up with 50 testnet XLM.
+2. Ada starts a circle: 10 XLM per round, 3 members, round length "5 min (demo)". The hint under the amount shows her balance, so she knows the most she can set per round.
+3. The circle goes live on-chain. Ada shares the invite link.
+4. Bola opens the link, signs up with a passkey and joins. Chidi does the same. The circle is now full, so round 1 starts automatically.
+5. Chidi pays 10 XLM, then Bola. Each payment goes into the contract, not to a person.
+6. Ada pays last. The contract immediately pays the 30 XLM pot to Ada, the round 1 member. Her wallet goes from 50 XLM to 70 XLM.
+7. Ada's dashboard shows her on-time payment reputation, which follows her to future circles.
